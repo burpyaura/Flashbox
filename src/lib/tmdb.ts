@@ -41,3 +41,4 @@ export const getTopRatedMovies = () => tmdb<TmdbResponse>("/movie/top_rated");
 export const getPopularTv = () => tmdb<TmdbResponse>("/tv/popular");
 export const getAnime = () => tmdb<TmdbResponse>("/discover/tv?with_genres=16");
 export const getDetails = (id: number, type: MediaType) => tmdb<TmdbItem>(`/${type}/${id}?append_to_response=external_ids`);
+export const searchTmdb = (query: string) => tmdb<TmdbResponse>(`/search/multi?query=${encodeURIComponent(query)}&include_adult=false&page=1`);

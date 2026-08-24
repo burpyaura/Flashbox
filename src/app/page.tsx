@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, Bookmark, Clock3, Download, MoreVertical, Play, Search, Star, Tv, UserRound } from "lucide-react";
-import { getAnime, getDetails, getPopularMovies, getPopularTv, getTopRatedMovies, getTrending, imageUrl, itemRuntime, itemTitle, itemType, itemYear, MediaType, TmdbItem } from "@/lib/tmdb";
+import { ArrowLeft, Bookmark, Clock3, Download, MoreVertical, Play, Search, Star, Tv, UserRound, X } from "lucide-react";
+import { getAnime, getDetails, getPopularMovies, getPopularTv, getTopRatedMovies, getTrending, imageUrl, itemRuntime, itemTitle, itemType, itemYear, MediaType, searchTmdb, TmdbItem } from "@/lib/tmdb";
 
 type Selected = { id: number; type: MediaType };
 const fallback = (label: string) => <div className="image-fallback">{label}</div>;
@@ -18,6 +18,10 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [rowLoading, setRowLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<TmdbItem[]>([]);
+  const [searching, setSearching] = useState(false);
 
   useEffect(() => { getTrending().then(data => { const items = data.results.filter(item => item.media_type === "movie" || item.media_type === "tv").slice(0, 5); setHero(items); setContinueItems(items.slice(0, 4)); }).catch(() => setError(true)).finally(() => setLoading(false)); }, []);
   useEffect(() => { if (!hero.length) return; const timer = window.setInterval(() => setHeroIndex(index => (index + 1) % hero.length), 5000); return () => window.clearInterval(timer); }, [hero.length]);
@@ -26,13 +30,22 @@ export default function Home() {
     const request = tab === "Movies" ? getPopularMovies() : tab === "Anime" ? getAnime() : tab === "TV Shows" ? getPopularTv() : getTopRatedMovies();
     request.then(data => setPopular(data.results.slice(0, 12))).catch(() => setPopular([])).finally(() => setRowLoading(false));
   }, [tab]);
+  useEffect(() => {
+    if (!query.trim()) { setSearchResults([]); setSearching(false); return; }
+    const timer = window.setTimeout(() => {
+      setSearching(true);
+      searchTmdb(query.trim()).then(data => setSearchResults(data.results.filter(item => (item.media_type === "movie" || item.media_type === "tv") && (item.poster_path || item.backdrop_path)).slice(0, 8))).catch(() => setSearchResults([])).finally(() => setSearching(false));
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [query]);
 
   if (selected) return <DetailsScreen selected={selected} onBack={() => setSelected(null)} />;
   const activeHero = hero[heroIndex];
   return <main className="shadow-app">
-    <header className="topbar"><div className="brand"><span className="brand-mark"><Play fill="currentColor" /></span><b>SHADOW</b><b className="red"> PLAY</b></div><Search className="search" />
+    <header className="topbar"><div className="brand"><span className="brand-mark"><Play fill="currentColor" /></span><b>SHADOW</b><b className="red"> PLAY</b></div><button className="search-button" onClick={() => setSearchOpen(value => !value)} aria-label="Search">{searchOpen ? <X className="search" /> : <Search className="search" />}</button>
       <nav>{["Home", "Movies", "Anime", "TV Shows"].map(item => <button key={item} onClick={() => setTab(item)} className={tab === item ? "active" : ""}>{item}</button>)}</nav>
     </header>
+    {searchOpen && <section className="search-panel"><div className="search-input"><Search size={16} /><input autoFocus value={query} onChange={event => setQuery(event.target.value)} placeholder="Search movies, shows, anime..." /><button onClick={() => setQuery("")}><X size={15} /></button></div>{query && <div className="search-results">{searching ? <span className="search-status">Searching TMDB...</span> : searchResults.length ? searchResults.map(item => <button className="search-result" key={`${itemType(item)}-${item.id}`} onClick={() => setSelected({ id: item.id, type: itemType(item) })}>{imageUrl(item.poster_path) ? <img src={imageUrl(item.poster_path)!} alt="" /> : <span className="result-fallback" />}<span><strong>{itemTitle(item)}</strong><small>{itemType(item).toUpperCase()} · {itemYear(item) || "—"}</small></span></button>) : <span className="search-status">No TMDB results found.</span>}</div>}</section>}
     {error && <div className="api-error">TMDB is unavailable right now. Showing safe placeholders.</div>}
     {loading ? <HeroSkeleton /> : activeHero && <Hero item={activeHero} index={heroIndex} count={hero.length} onOpen={() => setSelected({ id: activeHero.id, type: itemType(activeHero) })} />}
     <SectionTitle title="Categories" />

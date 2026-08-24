@@ -12,6 +12,7 @@ button { border:0; color:inherit; font:inherit; cursor:pointer; }
 .brand-mark svg { width:18px; height:18px; }
 .red,.eyebrow,.section-title button { color:var(--red); }
 .search { position:absolute; right:0; top:0; width:20px; height:20px; color:#ddd; }
+.search-button { position:absolute; top:0; right:0; width:24px; height:24px; padding:0; background:none; }
 nav { display:flex; gap:12px; margin:16px 0; overflow-x:auto; scrollbar-width:none; }
 nav::-webkit-scrollbar { display:none; }
 nav button { flex:none; height:28px; padding:6px 14px; border-radius:14px; background:transparent; color:#aaa; font-size:12px; line-height:16px; }
@@ -53,6 +54,18 @@ footer button { display:flex; min-width:70px; align-items:center; flex-direction
 footer svg { width:20px; height:20px; }
 footer .nav-active { color:var(--red); }
 .api-error { margin:8px 0; padding:8px 10px; border:1px solid #3a1717; border-radius:6px; color:#d9a0a0; font-size:11px; }
+.search-panel { margin:-4px 0 12px; padding:8px; border:1px solid #292929; border-radius:8px; background:#141414; }
+.search-input { display:flex; height:32px; align-items:center; gap:7px; padding:0 9px; border-radius:6px; background:#222; color:#aaa; }
+.search-input input { min-width:0; flex:1; border:0; outline:0; background:transparent; color:#fff; font-size:12px; }
+.search-input button { display:grid; padding:0; background:none; color:#aaa; }
+.search-results { display:flex; gap:8px; margin-top:8px; overflow-x:auto; scrollbar-width:none; }
+.search-results::-webkit-scrollbar { display:none; }
+.search-result { display:flex; width:150px; min-width:150px; align-items:center; gap:7px; padding:5px; border-radius:6px; background:#1a1a1a; text-align:left; }
+.search-result img,.result-fallback { width:30px; height:42px; flex:none; object-fit:cover; border-radius:4px; background:#292929; }
+.search-result span:not(.result-fallback) { display:flex; min-width:0; flex-direction:column; gap:3px; }
+.search-result strong { overflow:hidden; font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
+.search-result small { font-size:9px; }
+.search-status { padding:8px 3px; color:#999; font-size:11px; }
 .skeleton { background:linear-gradient(100deg,#171717 25%,#242424 40%,#171717 55%); background-size:200% 100%; animation:shimmer 1.5s infinite; }
 @keyframes shimmer { to { background-position:-200% 0; } }
 .continue-card,.movie { cursor:pointer; }
