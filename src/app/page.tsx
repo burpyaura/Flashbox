@@ -26,6 +26,7 @@ export default function Home() {
   const [feedSections, setFeedSections] = useState<FeedSection[]>([]);
   const [feedPage, setFeedPage] = useState(0);
   const [feedLoading, setFeedLoading] = useState(false);
+  const [feedHasMore, setFeedHasMore] = useState(true);
   const feedLock = useRef(false);
 
   useEffect(() => { Promise.all([getBollywood(1), getAnime(1)]).then(([bollywood, anime]) => { const latestBollywood = bollywood.results.slice(0, 3).map(item => ({ ...item, heroLabel: "LATEST BOLLYWOOD" as const })); const popularAnime = anime.results.slice(0, 3).map(item => ({ ...item, media_type: "tv" as const, heroLabel: "POPULAR ANIME" as const })); const items = latestBollywood.flatMap((item, index) => [item, popularAnime[index]]).filter(Boolean) as HeroItem[]; setHero(items); setContinueItems(items.slice(0, 4)); }).catch(() => setError(true)).finally(() => setLoading(false)); }, []);
@@ -37,7 +38,7 @@ export default function Home() {
     request.then(data => setPopular(data.results)).catch(() => setPopular([])).finally(() => setRowLoading(false));
   }, [tab]);
   const loadFeedPage = () => {
-    if (feedLock.current || !hasMore) return;
+    if (feedLock.current || !feedHasMore) return;
     feedLock.current = true; setFeedLoading(true);
     const nextPage = feedPage + 1;
     Promise.all([getTopRatedMovies(nextPage), getTrendingTv(nextPage), getActionMovies(nextPage), getAnime(nextPage), getUpcomingMovies(nextPage)]).then(([classics, tv, action, anime, upcoming]) => {
@@ -50,11 +51,11 @@ export default function Home() {
       ];
       setFeedSections(current => current.length ? current.map((section, index) => ({ ...section, items: [...section.items, ...batch[index].items] })) : batch);
       setFeedPage(nextPage);
-      setHasMore(batch.some(section => section.items.length > 0));
-    }).catch(() => setHasMore(false)).finally(() => { feedLock.current = false; setFeedLoading(false); });
+      setFeedHasMore(batch.some(section => section.items.length > 0));
+    }).catch(() => setFeedHasMore(false)).finally(() => { feedLock.current = false; setFeedLoading(false); });
   };
   useEffect(() => { loadFeedPage(); }, []);
-  useEffect(() => { const onScroll = () => { if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 700) loadFeedPage(); }; window.addEventListener("scroll", onScroll, { passive: true }); return () => window.removeEventListener("scroll", onScroll); }, [feedPage, hasMore]);
+  useEffect(() => { const onScroll = () => { if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 700) loadFeedPage(); }; window.addEventListener("scroll", onScroll, { passive: true }); return () => window.removeEventListener("scroll", onScroll); }, [feedPage, feedHasMore]);
   const loadMore = () => {
     if (loadingMore || rowLoading || !hasMore) return;
     const nextPage = page + 1; setLoadingMore(true);
