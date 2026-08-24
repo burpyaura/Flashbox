@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Bookmark, Clock3, Download, MoreVertical, Play, Search, Star, Tv, UserRound, X, Trash2, ArrowRight } from "lucide-react";
-import { getAnime, getBollywood, getDetails, getGlobalTrending, getHollywood, getPopularAnime, getPopularMovies, getPopularTv, getTopRatedMovies, getTrending, getUpcomingMovies, imageUrl, itemRuntime, itemTitle, itemType, itemYear, MediaType, searchTmdb, TmdbItem } from "@/lib/tmdb";
+import { getActionMovies, getAnime, getBollywood, getDetails, getGlobalTrending, getHollywood, getPopularAnime, getPopularTv, getTopRatedMovies, getTrending, getTrendingTv, imageUrl, itemRuntime, itemTitle, itemType, itemYear, MediaType, searchTmdb, TmdbItem } from "@/lib/tmdb";
 
 type Selected = { id: number; type: MediaType };
 type FeedSection = { title: string; items: TmdbItem[] };
@@ -12,78 +12,58 @@ export default function Home() {
   const [tab, setTab] = useState("Home");
   const [nav, setNav] = useState(0);
   const [hero, setHero] = useState<HeroItem[]>([]);
-  const [popular, setPopular] = useState<TmdbItem[]>([]);
-  const [continueItems, setContinueItems] = useState<TmdbItem[]>([]);
   const [heroIndex, setHeroIndex] = useState(0);
   const [selected, setSelected] = useState<Selected | null>(null);
   const [loading, setLoading] = useState(true);
-  const [rowLoading, setRowLoading] = useState(false);
   const [error, setError] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [page, setPage] = useState(1);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
   const [feedSections, setFeedSections] = useState<FeedSection[]>([]);
   const [feedLoading, setFeedLoading] = useState(false);
   const feedLock = useRef(false);
   const feedPageRef = useRef(0);
   const feedHasMoreRef = useRef(true);
   const feedSentinel = useRef<HTMLDivElement | null>(null);
+  const homeScrollRef = useRef<HTMLElement | null>(null);
 
-  useEffect(() => { Promise.all([getBollywood(1), getAnime(1)]).then(([bollywood, anime]) => { const latestBollywood = (bollywood.results ?? []).slice(0, 3).map(item => ({ ...item, heroLabel: "LATEST BOLLYWOOD" as const })); const popularAnime = (anime.results ?? []).slice(0, 3).map(item => ({ ...item, media_type: "tv" as const, heroLabel: "POPULAR ANIME" as const })); const items = latestBollywood.flatMap((item, index) => popularAnime[index] ? [item, popularAnime[index]] : [item]); setHero(items); setContinueItems(items.slice(0, 4)); }).catch(() => setError(true)).finally(() => setLoading(false)); }, []);
+  useEffect(() => { Promise.all([getBollywood(1), getAnime(1)]).then(([bollywood, anime]) => { const latestBollywood = (bollywood.results ?? []).slice(0, 3).map(item => ({ ...item, heroLabel: "LATEST BOLLYWOOD" as const })); const popularAnime = (anime.results ?? []).slice(0, 3).map(item => ({ ...item, media_type: "tv" as const, heroLabel: "POPULAR ANIME" as const })); const items = latestBollywood.flatMap((item, index) => popularAnime[index] ? [item, popularAnime[index]] : [item]); setHero(items); }).catch(() => setError(true)).finally(() => setLoading(false)); }, []);
   useEffect(() => { if (!hero.length) return; const timer = window.setInterval(() => setHeroIndex(index => (index + 1) % hero.length), 4000); return () => window.clearInterval(timer); }, [hero.length]);
-  useEffect(() => {
-    setRowLoading(true);
-    setPage(1); setHasMore(true);
-    const request = tab === "Movies" ? getPopularMovies(1) : tab === "Anime" ? getAnime(1) : tab === "TV Shows" ? getPopularTv(1) : tab === "Bollywood" ? getBollywood(1) : getTopRatedMovies(1);
-    request.then(data => setPopular(data.results)).catch(() => setPopular([])).finally(() => setRowLoading(false));
-  }, [tab]);
   const fetchNextPage = () => {
     if (feedLock.current || !feedHasMoreRef.current) return;
     feedLock.current = true; setFeedLoading(true);
     const nextPage = feedPageRef.current + 1;
-    Promise.all([getBollywood(nextPage), getPopularAnime(nextPage), getHollywood(nextPage), getGlobalTrending(nextPage)]).then(([bollywood, anime, hollywood, global]) => {
-      const split = (items: TmdbItem[], parts: number) => Array.from({ length: parts }, (_, index) => items.slice(Math.floor(index * items.length / parts), Math.floor((index + 1) * items.length / parts)));
-      const bollywoodRows = split(bollywood.results ?? [], 4);
-      const animeRows = split((anime.results ?? []).map(item => ({ ...item, media_type: "tv" as const })), 3);
-      const hollywoodRows = split(hollywood.results ?? [], 2);
-      const globalItems = (global.results ?? []).filter(item => item.media_type === "movie" || item.media_type === "tv");
-      const batch: FeedSection[] = [
-        { title: "Bollywood Movies", items: bollywoodRows[0] },
-        { title: "Bollywood Spotlight", items: bollywoodRows[1] },
-        { title: "Bollywood Favorites", items: bollywoodRows[2] },
-        { title: "Bollywood New Wave", items: bollywoodRows[3] },
-        { title: "Trending Anime", items: animeRows[0] },
-        { title: "Top Anime Shows", items: animeRows[1] },
-        { title: "Anime Classics", items: animeRows[2] },
-        { title: "Hollywood Blockbusters", items: hollywoodRows[0] },
-        { title: "Hollywood Essentials", items: hollywoodRows[1] },
-        { title: "Global Trending", items: globalItems },
-      ];
+    const request = nextPage === 1 ? Promise.all([getBollywood(1), getPopularAnime(1), getHollywood(1)]).then(([bollywood, anime, hollywood]) => [
+      { title: "Bollywood Movies", items: bollywood.results ?? [] },
+      { title: "Trending Anime", items: (anime.results ?? []).map(item => ({ ...item, media_type: "tv" as const })) },
+      { title: "Hollywood Blockbusters", items: hollywood.results ?? [] },
+    ]) : nextPage === 2 ? Promise.all([getTopRatedMovies(nextPage), getTrendingTv(nextPage), getActionMovies(nextPage)]).then(([classics, web, action]) => [
+      { title: "Top Rated South Dubbed", items: classics.results ?? [] },
+      { title: "Trending Web Series", items: (web.results ?? []).map(item => ({ ...item, media_type: "tv" as const })) },
+      { title: "Action Thrillers", items: action.results ?? [] },
+    ]) : Promise.all([getBollywood(nextPage), getPopularAnime(nextPage), getPopularTv(nextPage), getGlobalTrending(nextPage)]).then(([hindi, anime, shows, global]) => [
+      { title: "Popular Classic Hindi Movies", items: hindi.results ?? [] },
+      { title: "Anime Movies", items: (anime.results ?? []).map(item => ({ ...item, media_type: "tv" as const })) },
+      { title: "Blockbuster Hit Shows", items: (shows.results ?? []).map(item => ({ ...item, media_type: "tv" as const })) },
+      { title: "Global Trending", items: (global.results ?? []).filter(item => item.media_type === "movie" || item.media_type === "tv") },
+    ]);
+    request.then(rawBatch => {
+      const batch: FeedSection[] = rawBatch.map(section => ({ ...section, items: section.items.filter((item, index, self) => index === self.findIndex(candidate => candidate.id === item.id)) }));
       setFeedSections(current => current.length ? current.map((section, index) => {
-        const newItems = batch[index].items;
+        const newItems = batch[index]?.items ?? [];
         const uniqueItems = newItems.filter((item, itemIndex, self) => itemIndex === self.findIndex(candidate => candidate.id === item.id));
         const existingIds = new Set(section.items.map(item => item.id));
         return { ...section, items: [...section.items, ...uniqueItems.filter(item => !existingIds.has(item.id))] };
-      }) : batch.map(section => ({ ...section, items: section.items.filter((item, itemIndex, self) => itemIndex === self.findIndex(candidate => candidate.id === item.id)) })));
+      }) : batch);
       feedPageRef.current = nextPage;
       const more = batch.some(section => section.items.length > 0);
       feedHasMoreRef.current = more;
     }).catch(() => { feedHasMoreRef.current = false; }).finally(() => { feedLock.current = false; setFeedLoading(false); });
   };
   useEffect(() => { fetchNextPage(); }, []);
-  useEffect(() => { const sentinel = feedSentinel.current; if (!sentinel) return; const observer = new IntersectionObserver(entries => { if (entries.some(entry => entry.isIntersecting)) fetchNextPage(); }, { rootMargin: "700px 0px" }); observer.observe(sentinel); return () => observer.disconnect(); }, []);
-  const loadMore = () => {
-    if (loadingMore || rowLoading || !hasMore) return;
-    const nextPage = page + 1; setLoadingMore(true);
-    const request = tab === "Movies" ? getPopularMovies(nextPage) : tab === "Anime" ? getAnime(nextPage) : tab === "TV Shows" ? getPopularTv(nextPage) : tab === "Bollywood" ? getBollywood(nextPage) : getTopRatedMovies(nextPage);
-    request.then(data => { setPopular(items => { const existingIds = new Set(items.map(item => item.id)); const uniqueItems = data.results.filter((item, index, self) => index === self.findIndex(candidate => candidate.id === item.id)).filter(item => !existingIds.has(item.id)); return [...items, ...uniqueItems]; }); setPage(nextPage); setHasMore(data.results.length > 0); }).catch(() => setHasMore(false)).finally(() => setLoadingMore(false));
-  };
-
+  useEffect(() => { const sentinel = feedSentinel.current; const scrollRoot = homeScrollRef.current; if (!sentinel || !scrollRoot) return; const observer = new IntersectionObserver(entries => { if (entries.some(entry => entry.isIntersecting)) fetchNextPage(); }, { root: scrollRoot, rootMargin: "700px 0px" }); observer.observe(sentinel); return () => observer.disconnect(); }, []);
   if (selected) return <DetailsScreen selected={selected} onBack={() => setSelected(null)} />;
   if (searchOpen) return <SearchScreen onClose={() => setSearchOpen(false)} onOpen={setSelected} />;
   const activeHero = hero[heroIndex];
-  return <main className="shadow-app">
+  return <main ref={homeScrollRef} className="shadow-app" onScroll={event => { const target = event.currentTarget; const bottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 200; if (bottom && !feedLoading) fetchNextPage(); }}>
     <header className="topbar"><div className="brand"><span className="brand-mark"><Play fill="currentColor" /></span><b>SHADOW</b><b className="red"> PLAY</b></div><button className="search-button" onClick={() => setSearchOpen(value => !value)} aria-label="Search">{searchOpen ? <X className="search" /> : <Search className="search" />}</button>
       <nav>{["Home", "Movies", "Anime", "TV Shows", "Bollywood"].map(item => <button key={item} onClick={() => setTab(item)} className={tab === item ? "active" : ""}>{item}</button>)}</nav>
     </header>
@@ -91,14 +71,11 @@ export default function Home() {
     {loading ? <HeroSkeleton /> : activeHero && <Hero item={activeHero} index={heroIndex} count={hero.length} onOpen={() => setSelected({ id: activeHero.id, type: itemType(activeHero) })} />}
     <SectionTitle title="Categories" />
     <div className="categories">{[["Anime", Star], ["Bollywood", Play], ["Hollywood", Star], ["TV Shows", Tv]].map(([label, Icon]: any) => <button className="category" key={label} onClick={() => setTab(label === "Anime" ? "Anime" : label === "Bollywood" ? "Bollywood" : label === "TV Shows" ? "TV Shows" : "Movies")}><Icon fill="currentColor" /><span>{label}</span></button>)}</div>
-    <SectionTitle title={tab === "Home" ? "Popular Movies" : tab} action="View All" />
-     <div className="scroller" onScroll={event => { const target = event.currentTarget; if (target.scrollLeft + target.clientWidth >= target.scrollWidth - 220) loadMore(); }}>{rowLoading ? Array.from({ length: 6 }, (_, index) => <div className="movie skeleton" key={`popular-loading-${index}`} />) : <>{popular.map((item, index) => <MovieCard key={`popular-${item.id}-${index}`} item={item} onOpen={() => setSelected({ id: item.id, type: itemType(item) })} />)}{loadingMore && <div className="movie skeleton" />}</>}</div>
-     <SectionTitle title="Continue Watching" action="View All" />
-     <div className="scroller">{continueItems.map((item, index) => <ContinueCard key={`continue-${item.id}-${index}`} item={item} progress={[72, 58, 86, 74][index] ?? 40} onOpen={() => setSelected({ id: item.id, type: itemType(item) })} />)}</div>
      <div className="infinite-feed">{feedSections.map(section => <section className="feed-section" key={section.title}><SectionTitle title={section.title} action="View All" /><div className="scroller">{section.items.map((item, index) => <MovieCard key={`${section.title}-${item.id}-${index}`} item={item} onOpen={() => setSelected({ id: item.id, type: itemType(item) })} />)}</div></section>)}</div>
       <div id="scroll-sentinel" ref={feedSentinel} className="feed-sentinel" aria-hidden="true" />
       {feedLoading && <div className="feed-loader" aria-label="Loading more content"><span className="spinner" /></div>}
-     <footer>{[[Play, "Home"], [Clock3, "Recent Watch"], [Download, "Downloads"], [UserRound, "Profile"]].map(([Icon, label]: any, i) => <button key={label} onClick={() => setNav(i)} className={nav === i ? "nav-active" : ""}><Icon fill={i === 0 && nav === 0 ? "currentColor" : "none"} /><span>{label}</span></button>)}</footer>
+      <button className="load-more-button" onClick={fetchNextPage} disabled={feedLoading}>{feedLoading ? "Loading Movies..." : "Load More Movies"}</button>
+      <footer>{[[Play, "Home"], [Clock3, "Recent Watch"], [Download, "Downloads"], [UserRound, "Profile"]].map(([Icon, label]: any, i) => <button key={label} onClick={() => setNav(i)} className={nav === i ? "nav-active" : ""}><Icon fill={i === 0 && nav === 0 ? "currentColor" : "none"} /><span>{label}</span></button>)}</footer>
   </main>;
 }
 
