@@ -45,7 +45,10 @@ export const getPopularTv = (page = 1) => tmdb<TmdbResponse>(`/tv/popular?page=$
 export const getTrendingTv = (page = 1) => tmdb<TmdbResponse>(`/trending/tv/day?page=${page}`);
 export const getActionMovies = (page = 1) => tmdb<TmdbResponse>(`/discover/movie?with_genres=28&sort_by=popularity.desc&page=${page}`);
 export const getUpcomingMovies = (page = 1) => tmdb<TmdbResponse>(`/movie/upcoming?sort_by=primary_release_date.asc&page=${page}`);
+export const getHollywood = (page = 1) => tmdb<TmdbResponse>(`/discover/movie?with_original_language=en&sort_by=popularity.desc&page=${page}`);
+export const getPopularAnime = (page = 1) => tmdb<TmdbResponse>(`/discover/tv?with_genres=16&sort_by=popularity.desc&page=${page}`);
+export const getGlobalTrending = (page = 1) => tmdb<TmdbResponse>(`/trending/all/day?page=${page}`);
 export const getAnime = (page = 1) => tmdb<TmdbResponse>(`/discover/tv?with_genres=16&with_original_language=ja&sort_by=popularity.desc&page=${page}`);
-export const getBollywood = (page = 1) => tmdb<TmdbResponse>(`/discover/movie?with_original_language=hi&region=IN&sort_by=popularity.desc&page=${page}`);
+export const getBollywood = (page = 1) => tmdb<TmdbResponse>(`/discover/movie?with_original_language=hi&sort_by=popularity.desc&page=${page}`);
 export const getDetails = (id: number, type: MediaType) => tmdb<TmdbItem>(`/${type}/${id}?append_to_response=external_ids`);
 export const searchTmdb = (query: string) => tmdb<TmdbResponse>(`/search/multi?query=${encodeURIComponent(query)}&include_adult=false&page=1`);

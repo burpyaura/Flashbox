@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Bookmark, Clock3, Download, MoreVertical, Play, Search, Star, Tv, UserRound, X, Trash2, ArrowRight } from "lucide-react";
-import { getActionMovies, getAnime, getBollywood, getDetails, getPopularMovies, getPopularTv, getTopRatedMovies, getTrending, getTrendingTv, getUpcomingMovies, imageUrl, itemRuntime, itemTitle, itemType, itemYear, MediaType, searchTmdb, TmdbItem } from "@/lib/tmdb";
+import { getAnime, getBollywood, getDetails, getGlobalTrending, getHollywood, getPopularAnime, getPopularMovies, getPopularTv, getTopRatedMovies, getTrending, getUpcomingMovies, imageUrl, itemRuntime, itemTitle, itemType, itemYear, MediaType, searchTmdb, TmdbItem } from "@/lib/tmdb";
 
 type Selected = { id: number; type: MediaType };
 type FeedSection = { title: string; items: TmdbItem[] };
@@ -42,13 +42,23 @@ export default function Home() {
     if (feedLock.current || !feedHasMoreRef.current) return;
     feedLock.current = true; setFeedLoading(true);
     const nextPage = feedPageRef.current + 1;
-    Promise.all([getTopRatedMovies(nextPage), getTrendingTv(nextPage), getActionMovies(nextPage), getAnime(nextPage), getUpcomingMovies(nextPage)]).then(([classics, tv, action, anime, upcoming]) => {
+    Promise.all([getBollywood(nextPage), getPopularAnime(nextPage), getHollywood(nextPage), getGlobalTrending(nextPage)]).then(([bollywood, anime, hollywood, global]) => {
+      const split = (items: TmdbItem[], parts: number) => Array.from({ length: parts }, (_, index) => items.slice(Math.floor(index * items.length / parts), Math.floor((index + 1) * items.length / parts)));
+      const bollywoodRows = split(bollywood.results ?? [], 4);
+      const animeRows = split((anime.results ?? []).map(item => ({ ...item, media_type: "tv" as const })), 3);
+      const hollywoodRows = split(hollywood.results ?? [], 2);
+      const globalItems = (global.results ?? []).filter(item => item.media_type === "movie" || item.media_type === "tv");
       const batch: FeedSection[] = [
-        { title: "Top Rated Classics", items: classics.results ?? [] },
-        { title: "Trending TV & Web Series", items: (tv.results ?? []).map(item => ({ ...item, media_type: "tv" as const })) },
-        { title: "Action & Adventure Specials", items: action.results ?? [] },
-        { title: "Popular Anime Collections", items: (anime.results ?? []).map(item => ({ ...item, media_type: "tv" as const })) },
-        { title: "Upcoming Releases", items: upcoming.results ?? [] },
+        { title: "Bollywood Movies", items: bollywoodRows[0] },
+        { title: "Bollywood Spotlight", items: bollywoodRows[1] },
+        { title: "Bollywood Favorites", items: bollywoodRows[2] },
+        { title: "Bollywood New Wave", items: bollywoodRows[3] },
+        { title: "Trending Anime", items: animeRows[0] },
+        { title: "Top Anime Shows", items: animeRows[1] },
+        { title: "Anime Classics", items: animeRows[2] },
+        { title: "Hollywood Blockbusters", items: hollywoodRows[0] },
+        { title: "Hollywood Essentials", items: hollywoodRows[1] },
+        { title: "Global Trending", items: globalItems },
       ];
       setFeedSections(current => current.length ? current.map((section, index) => {
         const newItems = batch[index].items;
