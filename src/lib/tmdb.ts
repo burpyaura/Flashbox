@@ -33,7 +33,9 @@ export const itemRuntime = (item: TmdbItem) => item.runtime ? `${Math.floor(item
 async function tmdb<T>(path: string): Promise<T> {
   const response = await fetch(`${TMDB_BASE}${path}${path.includes("?") ? "&" : "?"}api_key=${TMDB_KEY}`);
   if (!response.ok) throw new Error(`TMDB request failed: ${response.status}`);
-  return response.json() as Promise<T>;
+  const data = await response.json() as T & { results?: unknown };
+  if (Array.isArray(data.results)) data.results = data.results.filter(Boolean);
+  return data as T;
 }
 
 export const getTrending = () => tmdb<TmdbResponse>("/trending/all/day");

@@ -29,7 +29,7 @@ export default function Home() {
   const [feedHasMore, setFeedHasMore] = useState(true);
   const feedLock = useRef(false);
 
-  useEffect(() => { Promise.all([getBollywood(1), getAnime(1)]).then(([bollywood, anime]) => { const latestBollywood = bollywood.results.slice(0, 3).map(item => ({ ...item, heroLabel: "LATEST BOLLYWOOD" as const })); const popularAnime = anime.results.slice(0, 3).map(item => ({ ...item, media_type: "tv" as const, heroLabel: "POPULAR ANIME" as const })); const items = latestBollywood.flatMap((item, index) => [item, popularAnime[index]]).filter(Boolean) as HeroItem[]; setHero(items); setContinueItems(items.slice(0, 4)); }).catch(() => setError(true)).finally(() => setLoading(false)); }, []);
+  useEffect(() => { Promise.all([getBollywood(1), getAnime(1)]).then(([bollywood, anime]) => { const latestBollywood = (bollywood.results ?? []).slice(0, 3).map(item => ({ ...item, heroLabel: "LATEST BOLLYWOOD" as const })); const popularAnime = (anime.results ?? []).slice(0, 3).map(item => ({ ...item, media_type: "tv" as const, heroLabel: "POPULAR ANIME" as const })); const items = latestBollywood.flatMap((item, index) => popularAnime[index] ? [item, popularAnime[index]] : [item]); setHero(items); setContinueItems(items.slice(0, 4)); }).catch(() => setError(true)).finally(() => setLoading(false)); }, []);
   useEffect(() => { if (!hero.length) return; const timer = window.setInterval(() => setHeroIndex(index => (index + 1) % hero.length), 4000); return () => window.clearInterval(timer); }, [hero.length]);
   useEffect(() => {
     setRowLoading(true);
@@ -43,11 +43,11 @@ export default function Home() {
     const nextPage = feedPage + 1;
     Promise.all([getTopRatedMovies(nextPage), getTrendingTv(nextPage), getActionMovies(nextPage), getAnime(nextPage), getUpcomingMovies(nextPage)]).then(([classics, tv, action, anime, upcoming]) => {
       const batch: FeedSection[] = [
-        { title: "Top Rated Classics", items: classics.results },
-        { title: "Trending TV & Web Series", items: tv.results.map(item => ({ ...item, media_type: "tv" as const })) },
-        { title: "Action & Adventure Specials", items: action.results },
-        { title: "Popular Anime Collections", items: anime.results.map(item => ({ ...item, media_type: "tv" as const })) },
-        { title: "Upcoming Releases", items: upcoming.results },
+        { title: "Top Rated Classics", items: classics.results ?? [] },
+        { title: "Trending TV & Web Series", items: (tv.results ?? []).map(item => ({ ...item, media_type: "tv" as const })) },
+        { title: "Action & Adventure Specials", items: action.results ?? [] },
+        { title: "Popular Anime Collections", items: (anime.results ?? []).map(item => ({ ...item, media_type: "tv" as const })) },
+        { title: "Upcoming Releases", items: upcoming.results ?? [] },
       ];
       setFeedSections(current => current.length ? current.map((section, index) => ({ ...section, items: [...section.items, ...batch[index].items] })) : batch);
       setFeedPage(nextPage);
@@ -99,7 +99,7 @@ function SearchScreen({ onClose, onOpen }: { onClose: () => void; onOpen: (selec
   const [recent, setRecent] = useState<string[]>([]);
   const [category, setCategory] = useState("Movie");
   const [loading, setLoading] = useState(false);
-  useEffect(() => { try { setRecent(JSON.parse(localStorage.getItem("shadow-play-recent") ?? "[]")); } catch { setRecent([]); } getTrending().then(data => { const items = data.results.filter(item => item.media_type === "movie" || item.media_type === "tv"); setTrending(items.slice(0, 10)); setRanked(items.slice(0, 12)); }).catch(() => { setTrending([]); setRanked([]); }); }, []);
+  useEffect(() => { try { const stored: unknown = JSON.parse(localStorage.getItem("shadow-play-recent") ?? "[]"); setRecent(Array.isArray(stored) ? stored.filter((value): value is string => typeof value === "string") : []); } catch { setRecent([]); } getTrending().then(data => { const items = (data.results ?? []).filter(item => item.media_type === "movie" || item.media_type === "tv"); setTrending(items.slice(0, 10)); setRanked(items.slice(0, 12)); }).catch(() => { setTrending([]); setRanked([]); }); }, []);
   useEffect(() => { if (!query.trim()) { setSuggestions([]); setLoading(false); return; } const timer = window.setTimeout(() => { setLoading(true); searchTmdb(query.trim()).then(data => setSuggestions(data.results.filter(item => item.media_type === "movie" || item.media_type === "tv").slice(0, 8))).catch(() => setSuggestions([])).finally(() => setLoading(false)); }, 300); return () => window.clearTimeout(timer); }, [query]);
   const open = (item: TmdbItem) => { const value = itemTitle(item); const next = [value, ...recent.filter(entry => entry.toLowerCase() !== value.toLowerCase())].slice(0, 8); setRecent(next); localStorage.setItem("shadow-play-recent", JSON.stringify(next)); onOpen({ id: item.id, type: itemType(item) }); };
   const selectRecent = (value: string) => { setQuery(value); };
