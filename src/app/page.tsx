@@ -4,17 +4,17 @@ import { useState } from "react";
 import { Clock3, Download, MoreVertical, Play, Search, Star, Tv, UserRound } from "lucide-react";
 
 const continueItems = [
-  ["Jujutsu Kaisen", "S2 E15", "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=700", "72%"],
-  ["K.G.F: Chapter 2", "2h 48m", "https://images.unsplash.com/photo-1607604276583-eef5c071ddf8?w=700", "58%"],
-  ["Avengers: Endgame", "3h 1m", "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?w=700", "86%"],
-  ["Demon Slayer", "S3 E7", "https://images.unsplash.com/photo-1541560052-77ec1bbc09f7?w=700", "74%"],
+  ["Jujutsu Kaisen", "S2 E15", "/shadow-assets/jujutsu.png", "72%"],
+  ["K.G.F: Chapter 2", "2h 48m", "/shadow-assets/kgf.png", "58%"],
+  ["Avengers: Endgame", "3h 1m", "/shadow-assets/avengers.png", "86%"],
+  ["Demon Slayer", "S3 E7", "/shadow-assets/demon-slayer.png", "74%"],
 ];
 const movies = [
-  ["Inception", "2h 28m", "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=700"],
-  ["3 Idiots", "2h 50m", "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=700"],
-  ["Your Name.", "1h 46m", "https://images.unsplash.com/photo-1446776877081-d282a0f896e2?w=700"],
-  ["Interstellar", "2h 49m", "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=700"],
-  ["Spirited Away", "2h 04m", "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=700"],
+  ["Inception", "2h 28m", "/shadow-assets/inception.png"],
+  ["3 Idiots", "2h 50m", "/shadow-assets/three-idiots.png"],
+  ["Your Name.", "1h 46m", "/shadow-assets/your-name.png"],
+  ["Interstellar", "2h 49m", "/shadow-assets/interstellar.png"],
+  ["Spirited Away", "2h 04m", "/shadow-assets/spirited-away.png"],
 ];
 
 export default function Home() {

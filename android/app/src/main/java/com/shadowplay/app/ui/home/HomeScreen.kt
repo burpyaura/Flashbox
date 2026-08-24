@@ -106,7 +106,7 @@ private fun HomeScreen(state: HomeUiState, onCategory: (String) -> Unit, onNav: 
 
 @Composable private fun HeroBanner() {
     Box(Modifier.fillMaxWidth().height(380.dp).padding(horizontal = 20.dp).clip(RoundedCornerShape(17.dp))) {
-        AsyncImage("https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200", "Solo Leveling hero", Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        AsyncImage("android.resource://com.shadowplay.app/drawable/hero_art", "Solo Leveling hero", Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(listOf(Color(0xF20D0D0D), Color(0x880D0D0D), Color.Transparent))))
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xE60D0D0D)))))
         Column(Modifier.align(Alignment.BottomStart).padding(20.dp)) {
