@@ -46,6 +46,7 @@ small { color:#aaa; font-size:10px; line-height:12px; }
 .progress i { display:block; height:100%; background:var(--red); }
 .movie { flex:none; width:110px; }
 .movie img { display:block; width:110px; height:165px; object-fit:cover; border:1px solid #292929; border-radius:8px; }
+.movie.skeleton { height:165px; border-radius:8px; }
 .movie strong,.movie small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .movie strong { margin-top:5px; font-size:12px; }
 .movie small { margin-top:2px; font-size:10px; }

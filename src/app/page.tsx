@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ArrowLeft, Bookmark, Clock3, Download, MoreVertical, Play, Search, Star, Tv, UserRound, X } from "lucide-react";
-import { getAnime, getDetails, getPopularMovies, getPopularTv, getTopRatedMovies, getTrending, imageUrl, itemRuntime, itemTitle, itemType, itemYear, MediaType, searchTmdb, TmdbItem } from "@/lib/tmdb";
+import { getAnime, getBollywood, getDetails, getPopularMovies, getPopularTv, getTopRatedMovies, getTrending, imageUrl, itemRuntime, itemTitle, itemType, itemYear, MediaType, searchTmdb, TmdbItem } from "@/lib/tmdb";
 
 type Selected = { id: number; type: MediaType };
 const fallback = (label: string) => <div className="image-fallback">{label}</div>;
@@ -22,14 +22,24 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<TmdbItem[]>([]);
   const [searching, setSearching] = useState(false);
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => { getTrending().then(data => { const items = data.results.filter(item => item.media_type === "movie" || item.media_type === "tv").slice(0, 5); setHero(items); setContinueItems(items.slice(0, 4)); }).catch(() => setError(true)).finally(() => setLoading(false)); }, []);
   useEffect(() => { if (!hero.length) return; const timer = window.setInterval(() => setHeroIndex(index => (index + 1) % hero.length), 5000); return () => window.clearInterval(timer); }, [hero.length]);
   useEffect(() => {
     setRowLoading(true);
-    const request = tab === "Movies" ? getPopularMovies() : tab === "Anime" ? getAnime() : tab === "TV Shows" ? getPopularTv() : getTopRatedMovies();
-    request.then(data => setPopular(data.results.slice(0, 12))).catch(() => setPopular([])).finally(() => setRowLoading(false));
+    setPage(1); setHasMore(true);
+    const request = tab === "Movies" ? getPopularMovies(1) : tab === "Anime" ? getAnime(1) : tab === "TV Shows" ? getPopularTv(1) : tab === "Bollywood" ? getBollywood(1) : getTopRatedMovies(1);
+    request.then(data => setPopular(data.results)).catch(() => setPopular([])).finally(() => setRowLoading(false));
   }, [tab]);
+  const loadMore = () => {
+    if (loadingMore || rowLoading || !hasMore) return;
+    const nextPage = page + 1; setLoadingMore(true);
+    const request = tab === "Movies" ? getPopularMovies(nextPage) : tab === "Anime" ? getAnime(nextPage) : tab === "TV Shows" ? getPopularTv(nextPage) : tab === "Bollywood" ? getBollywood(nextPage) : getTopRatedMovies(nextPage);
+    request.then(data => { setPopular(items => [...items, ...data.results]); setPage(nextPage); setHasMore(data.results.length > 0); }).catch(() => setHasMore(false)).finally(() => setLoadingMore(false));
+  };
   useEffect(() => {
     if (!query.trim()) { setSearchResults([]); setSearching(false); return; }
     const timer = window.setTimeout(() => {
@@ -43,15 +53,15 @@ export default function Home() {
   const activeHero = hero[heroIndex];
   return <main className="shadow-app">
     <header className="topbar"><div className="brand"><span className="brand-mark"><Play fill="currentColor" /></span><b>SHADOW</b><b className="red"> PLAY</b></div><button className="search-button" onClick={() => setSearchOpen(value => !value)} aria-label="Search">{searchOpen ? <X className="search" /> : <Search className="search" />}</button>
-      <nav>{["Home", "Movies", "Anime", "TV Shows"].map(item => <button key={item} onClick={() => setTab(item)} className={tab === item ? "active" : ""}>{item}</button>)}</nav>
+      <nav>{["Home", "Movies", "Anime", "TV Shows", "Bollywood"].map(item => <button key={item} onClick={() => setTab(item)} className={tab === item ? "active" : ""}>{item}</button>)}</nav>
     </header>
     {searchOpen && <section className="search-panel"><div className="search-input"><Search size={16} /><input autoFocus value={query} onChange={event => setQuery(event.target.value)} placeholder="Search movies, shows, anime..." /><button onClick={() => setQuery("")}><X size={15} /></button></div>{query && <div className="search-results">{searching ? <span className="search-status">Searching TMDB...</span> : searchResults.length ? searchResults.map(item => <button className="search-result" key={`${itemType(item)}-${item.id}`} onClick={() => setSelected({ id: item.id, type: itemType(item) })}>{imageUrl(item.poster_path) ? <img src={imageUrl(item.poster_path)!} alt="" /> : <span className="result-fallback" />}<span><strong>{itemTitle(item)}</strong><small>{itemType(item).toUpperCase()} · {itemYear(item) || "—"}</small></span></button>) : <span className="search-status">No TMDB results found.</span>}</div>}</section>}
     {error && <div className="api-error">TMDB is unavailable right now. Showing safe placeholders.</div>}
     {loading ? <HeroSkeleton /> : activeHero && <Hero item={activeHero} index={heroIndex} count={hero.length} onOpen={() => setSelected({ id: activeHero.id, type: itemType(activeHero) })} />}
     <SectionTitle title="Categories" />
-    <div className="categories">{[["Anime", Star], ["Bollywood", Play], ["Hollywood", Star], ["TV Shows", Tv]].map(([label, Icon]: any) => <button className="category" key={label} onClick={() => setTab(label === "Anime" ? "Anime" : label === "TV Shows" ? "TV Shows" : "Movies")}><Icon fill="currentColor" /><span>{label}</span></button>)}</div>
+    <div className="categories">{[["Anime", Star], ["Bollywood", Play], ["Hollywood", Star], ["TV Shows", Tv]].map(([label, Icon]: any) => <button className="category" key={label} onClick={() => setTab(label === "Anime" ? "Anime" : label === "Bollywood" ? "Bollywood" : label === "TV Shows" ? "TV Shows" : "Movies")}><Icon fill="currentColor" /><span>{label}</span></button>)}</div>
     <SectionTitle title={tab === "Home" ? "Popular Movies" : tab} action="View All" />
-    <div className="scroller">{rowLoading ? Array.from({ length: 6 }, (_, index) => <div className="movie skeleton" key={index} />) : popular.map(item => <MovieCard key={`${itemType(item)}-${item.id}`} item={item} onOpen={() => setSelected({ id: item.id, type: itemType(item) })} />)}</div>
+    <div className="scroller" onScroll={event => { const target = event.currentTarget; if (target.scrollLeft + target.clientWidth >= target.scrollWidth - 220) loadMore(); }}>{rowLoading ? Array.from({ length: 6 }, (_, index) => <div className="movie skeleton" key={index} />) : <>{popular.map(item => <MovieCard key={`${itemType(item)}-${item.id}`} item={item} onOpen={() => setSelected({ id: item.id, type: itemType(item) })} />)}{loadingMore && <div className="movie skeleton" />}</>}</div>
     <SectionTitle title="Continue Watching" action="View All" />
     <div className="scroller">{continueItems.map((item, index) => <ContinueCard key={item.id} item={item} progress={[72, 58, 86, 74][index] ?? 40} onOpen={() => setSelected({ id: item.id, type: itemType(item) })} />)}</div>
     <footer>{[[Play, "Home"], [Clock3, "Recent Watch"], [Download, "Downloads"], [UserRound, "Profile"]].map(([Icon, label]: any, i) => <button key={label} onClick={() => setNav(i)} className={nav === i ? "nav-active" : ""}><Icon fill={i === 0 && nav === 0 ? "currentColor" : "none"} /><span>{label}</span></button>)}</footer>
