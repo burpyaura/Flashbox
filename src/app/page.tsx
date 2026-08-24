@@ -50,7 +50,12 @@ export default function Home() {
         { title: "Popular Anime Collections", items: (anime.results ?? []).map(item => ({ ...item, media_type: "tv" as const })) },
         { title: "Upcoming Releases", items: upcoming.results ?? [] },
       ];
-      setFeedSections(current => current.length ? current.map((section, index) => ({ ...section, items: [...section.items, ...batch[index].items] })) : batch);
+      setFeedSections(current => current.length ? current.map((section, index) => {
+        const newItems = batch[index].items;
+        const uniqueItems = newItems.filter((item, itemIndex, self) => itemIndex === self.findIndex(candidate => candidate.id === item.id));
+        const existingIds = new Set(section.items.map(item => item.id));
+        return { ...section, items: [...section.items, ...uniqueItems.filter(item => !existingIds.has(item.id))] };
+      }) : batch.map(section => ({ ...section, items: section.items.filter((item, itemIndex, self) => itemIndex === self.findIndex(candidate => candidate.id === item.id)) })));
       feedPageRef.current = nextPage;
       const more = batch.some(section => section.items.length > 0);
       feedHasMoreRef.current = more;
@@ -62,7 +67,7 @@ export default function Home() {
     if (loadingMore || rowLoading || !hasMore) return;
     const nextPage = page + 1; setLoadingMore(true);
     const request = tab === "Movies" ? getPopularMovies(nextPage) : tab === "Anime" ? getAnime(nextPage) : tab === "TV Shows" ? getPopularTv(nextPage) : tab === "Bollywood" ? getBollywood(nextPage) : getTopRatedMovies(nextPage);
-    request.then(data => { setPopular(items => [...items, ...data.results]); setPage(nextPage); setHasMore(data.results.length > 0); }).catch(() => setHasMore(false)).finally(() => setLoadingMore(false));
+    request.then(data => { setPopular(items => { const existingIds = new Set(items.map(item => item.id)); const uniqueItems = data.results.filter((item, index, self) => index === self.findIndex(candidate => candidate.id === item.id)).filter(item => !existingIds.has(item.id)); return [...items, ...uniqueItems]; }); setPage(nextPage); setHasMore(data.results.length > 0); }).catch(() => setHasMore(false)).finally(() => setLoadingMore(false));
   };
 
   if (selected) return <DetailsScreen selected={selected} onBack={() => setSelected(null)} />;
@@ -77,10 +82,10 @@ export default function Home() {
     <SectionTitle title="Categories" />
     <div className="categories">{[["Anime", Star], ["Bollywood", Play], ["Hollywood", Star], ["TV Shows", Tv]].map(([label, Icon]: any) => <button className="category" key={label} onClick={() => setTab(label === "Anime" ? "Anime" : label === "Bollywood" ? "Bollywood" : label === "TV Shows" ? "TV Shows" : "Movies")}><Icon fill="currentColor" /><span>{label}</span></button>)}</div>
     <SectionTitle title={tab === "Home" ? "Popular Movies" : tab} action="View All" />
-    <div className="scroller" onScroll={event => { const target = event.currentTarget; if (target.scrollLeft + target.clientWidth >= target.scrollWidth - 220) loadMore(); }}>{rowLoading ? Array.from({ length: 6 }, (_, index) => <div className="movie skeleton" key={index} />) : <>{popular.map(item => <MovieCard key={`${itemType(item)}-${item.id}`} item={item} onOpen={() => setSelected({ id: item.id, type: itemType(item) })} />)}{loadingMore && <div className="movie skeleton" />}</>}</div>
+     <div className="scroller" onScroll={event => { const target = event.currentTarget; if (target.scrollLeft + target.clientWidth >= target.scrollWidth - 220) loadMore(); }}>{rowLoading ? Array.from({ length: 6 }, (_, index) => <div className="movie skeleton" key={`popular-loading-${index}`} />) : <>{popular.map((item, index) => <MovieCard key={`popular-${item.id}-${index}`} item={item} onOpen={() => setSelected({ id: item.id, type: itemType(item) })} />)}{loadingMore && <div className="movie skeleton" />}</>}</div>
      <SectionTitle title="Continue Watching" action="View All" />
-     <div className="scroller">{continueItems.map((item, index) => <ContinueCard key={item.id} item={item} progress={[72, 58, 86, 74][index] ?? 40} onOpen={() => setSelected({ id: item.id, type: itemType(item) })} />)}</div>
-     <div className="infinite-feed">{feedSections.map(section => <section className="feed-section" key={section.title}><SectionTitle title={section.title} action="View All" /><div className="scroller">{section.items.map(item => <MovieCard key={`${section.title}-${itemType(item)}-${item.id}`} item={item} onOpen={() => setSelected({ id: item.id, type: itemType(item) })} />)}</div></section>)}</div>
+     <div className="scroller">{continueItems.map((item, index) => <ContinueCard key={`continue-${item.id}-${index}`} item={item} progress={[72, 58, 86, 74][index] ?? 40} onOpen={() => setSelected({ id: item.id, type: itemType(item) })} />)}</div>
+     <div className="infinite-feed">{feedSections.map(section => <section className="feed-section" key={section.title}><SectionTitle title={section.title} action="View All" /><div className="scroller">{section.items.map((item, index) => <MovieCard key={`${section.title}-${item.id}-${index}`} item={item} onOpen={() => setSelected({ id: item.id, type: itemType(item) })} />)}</div></section>)}</div>
       <div ref={feedSentinel} className="feed-sentinel" aria-hidden="true" />
       {feedLoading && <div className="feed-loader" aria-label="Loading more content"><span className="spinner" /></div>}
      <footer>{[[Play, "Home"], [Clock3, "Recent Watch"], [Download, "Downloads"], [UserRound, "Profile"]].map(([Icon, label]: any, i) => <button key={label} onClick={() => setNav(i)} className={nav === i ? "nav-active" : ""}><Icon fill={i === 0 && nav === 0 ? "currentColor" : "none"} /><span>{label}</span></button>)}</footer>
