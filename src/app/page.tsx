@@ -6,6 +6,11 @@ import { getAnime, getBollywood, getDetails, getGlobalTrending, getHollywood, ge
 
 type Selected = { id: number; type: MediaType };
 type FeedSection = { title: string; items: TmdbItem[] };
+const STREAM_CONFIG = {
+  SERVER_1_BASE: "https://player-server-1.example.com/embed/movie/",
+  SERVER_2_BASE: "https://player-server-2.example.com/embed/movie/",
+  SERVER_3_BASE: "https://player-server-3.example.com/embed/movie/",
+} as const;
 const fallback = (label: string) => <div className="image-fallback">{label}</div>;
 
 export default function Home() {
@@ -106,20 +111,15 @@ export default function Home() {
 type HeroItem = TmdbItem & { heroLabel: "LATEST BOLLYWOOD" | "POPULAR ANIME" };
 function Hero({ item, index, count, onOpen }: { item: HeroItem; index: number; count: number; onOpen: () => void }) { const heroImage = imageUrl(item.backdrop_path, "https://image.tmdb.org/t/p/original") ?? imageUrl(item.poster_path, "https://image.tmdb.org/t/p/original"); return <section className="hero" onClick={onOpen}><div className="hero-image">{heroImage ? <img src={heroImage} alt={`${itemTitle(item)} backdrop`} /> : <div className="hero-image-fallback">{itemTitle(item)}</div>}</div><div className="hero-content"><div className="hero-meta"><span className="eyebrow hero-badge">{item.heroLabel}</span><span className="hero-year">{itemYear(item) || "COMING SOON"}</span></div><h1>{itemTitle(item)}</h1><p>{item.overview || "Discover your next story from the shadows."}</p><div className="hero-bottom"><button className="watch" onClick={event => { event.stopPropagation(); onOpen(); }}><Play size={14} fill="currentColor" /> Watch Now</button><div className="dots" aria-label={`Slide ${index + 1} of ${count}`}>{Array.from({ length: count }, (_, dot) => <i className={dot === index ? "selected" : ""} key={dot} />)}</div></div></div></section>; }
 function HeroSkeleton() { return <section className="hero skeleton" aria-label="Loading trending content" />; }
-const streamNodeRoutes = [
-  process.env.NEXT_PUBLIC_STREAM_NODE_1 ?? "/api/stream/primary",
-  process.env.NEXT_PUBLIC_STREAM_NODE_2 ?? "/api/stream/secondary",
-  process.env.NEXT_PUBLIC_STREAM_NODE_3 ?? "/api/stream/tertiary",
-];
-function resolveStreamUrl(server: number, selected: Selected) { return `${streamNodeRoutes[server].replace(/\/$/, "")}/${selected.type}/${selected.id}`; }
+const resolveStreamUrl = (server: number, tmdbId: number) => `${[STREAM_CONFIG.SERVER_1_BASE, STREAM_CONFIG.SERVER_2_BASE, STREAM_CONFIG.SERVER_3_BASE][server]}${tmdbId}`;
 function WatchScreen({ selected, onBack, onSelect }: { selected: Selected; onBack: () => void; onSelect: (selected: Selected) => void }) {
   const [item, setItem] = useState<TmdbItem | null>(null);
   const [related, setRelated] = useState<TmdbItem[]>([]);
   const [activeServer, setActiveServer] = useState(0);
-  const [activeServerUrl, setActiveServerUrl] = useState(() => resolveStreamUrl(0, selected));
+  const [activeServerUrl, setActiveServerUrl] = useState(() => resolveStreamUrl(0, selected.id));
   const [favorite, setFavorite] = useState(false);
-  useEffect(() => { setItem(null); setRelated([]); setActiveServer(0); setActiveServerUrl(resolveStreamUrl(0, selected)); Promise.all([getDetails(selected.id, selected.type), getSimilar(selected.id, selected.type)]).then(([details, similar]) => { setItem(details); setRelated((similar.results ?? []).slice(0, 12)); }).catch(() => setItem(null)); }, [selected]);
-  const selectServer = (server: number) => { setActiveServer(server); setActiveServerUrl(resolveStreamUrl(server, selected)); };
+  useEffect(() => { setItem(null); setRelated([]); setActiveServer(0); setActiveServerUrl(resolveStreamUrl(0, selected.id)); Promise.all([getDetails(selected.id, selected.type), getSimilar(selected.id, selected.type)]).then(([details, similar]) => { setItem(details); setRelated((similar.results ?? []).slice(0, 12)); }).catch(() => setItem(null)); }, [selected]);
+  const selectServer = (server: number) => { setActiveServer(server); setActiveServerUrl(resolveStreamUrl(server, selected.id)); };
   if (!item) return <main className="watch-page"><button className="watch-back" onClick={onBack}><ArrowLeft size={19} /> Back</button><div className="watch-loading skeleton" /></main>;
   const share = () => { if (navigator.share) navigator.share({ title: itemTitle(item), url: window.location.href }); else navigator.clipboard?.writeText(window.location.href); };
   return <main className="watch-page"><header className="watch-header"><button className="watch-back" onClick={onBack}><ArrowLeft size={19} /> Home</button><strong>SHADOW <span>WATCH</span></strong></header><section className="watch-player"><iframe src={activeServerUrl} title={`Watch ${itemTitle(item)}`} allowFullScreen allow="autoplay; encrypted-media; picture-in-picture" /><button className="watch-fallback" onClick={() => window.open(activeServerUrl, "_blank")}>▶ Launch Stream in New Tab</button><div className="watch-servers"><span>Stream Server</span>{["Server 1", "Server 2", "Server 3"].map((name, index) => <button key={name} className={activeServer === index ? "active" : ""} onClick={() => selectServer(index)}>{name}</button>)}</div></section><section className="watch-info"><div className="watch-title-row"><div><p className="watch-kicker">NOW WATCHING</p><h1>{itemTitle(item)}</h1><p className="watch-meta">{itemYear(item) || "—"} · ⭐ {item.vote_average?.toFixed(1) ?? "—"}/10 · {itemRuntime(item)}</p></div><div className="watch-actions"><button className={favorite ? "active" : ""} onClick={() => setFavorite(value => !value)}><Bookmark size={17} fill={favorite ? "currentColor" : "none"} /> Favorite</button><button onClick={share}><Share2 size={17} /> Share</button><button onClick={() => window.open(activeServerUrl, "_blank")}><Download size={17} /> Download</button></div></div><div className="watch-genres">{(item.genres ?? []).slice(0, 5).map(genre => <span key={genre.id}>{genre.name}</span>)}</div><div className="watch-overview"><h2>Plot Overview</h2><p>{item.overview || "No synopsis is available for this title."}</p></div></section><section className="related"><div className="section-title"><h2>Recommended Movies</h2></div><div className="scroller">{related.map(candidate => <MovieCard key={`${itemType(candidate)}-${candidate.id}`} item={candidate} onOpen={() => onSelect({ id: candidate.id, type: itemType(candidate) })} />)}</div></section></main>;
@@ -151,4 +151,3 @@ function SearchScreen({ onClose, onOpen }: { onClose: () => void; onOpen: (selec
 
 function highlight(value: string, query: string) { const index = value.toLowerCase().indexOf(query.toLowerCase()); if (index < 0) return value; return <>{value.slice(0, index)}<mark>{value.slice(index, index + query.length)}</mark>{value.slice(index + query.length)}</>; }
 function genreName(ids?: number[]) { const names: Record<number, string> = { 16: "Animation", 28: "Action", 35: "Comedy", 18: "Drama", 27: "Horror", 878: "Sci-Fi", 10749: "Romance" }; return ids?.map(id => names[id]).filter(Boolean).slice(0, 1).join("") || "Featured"; }
-
