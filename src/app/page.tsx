@@ -38,7 +38,7 @@ export default function Home() {
     const request = tab === "Movies" ? getPopularMovies(1) : tab === "Anime" ? getAnime(1) : tab === "TV Shows" ? getPopularTv(1) : tab === "Bollywood" ? getBollywood(1) : getTopRatedMovies(1);
     request.then(data => setPopular(data.results)).catch(() => setPopular([])).finally(() => setRowLoading(false));
   }, [tab]);
-  const loadFeedPage = () => {
+  const fetchNextPage = () => {
     if (feedLock.current || !feedHasMoreRef.current) return;
     feedLock.current = true; setFeedLoading(true);
     const nextPage = feedPageRef.current + 1;
@@ -71,8 +71,8 @@ export default function Home() {
       feedHasMoreRef.current = more;
     }).catch(() => { feedHasMoreRef.current = false; }).finally(() => { feedLock.current = false; setFeedLoading(false); });
   };
-  useEffect(() => { loadFeedPage(); }, []);
-  useEffect(() => { const sentinel = feedSentinel.current; if (!sentinel) return; const observer = new IntersectionObserver(entries => { if (entries.some(entry => entry.isIntersecting)) loadFeedPage(); }, { rootMargin: "700px 0px" }); observer.observe(sentinel); return () => observer.disconnect(); }, []);
+  useEffect(() => { fetchNextPage(); }, []);
+  useEffect(() => { const sentinel = feedSentinel.current; if (!sentinel) return; const observer = new IntersectionObserver(entries => { if (entries.some(entry => entry.isIntersecting)) fetchNextPage(); }, { rootMargin: "700px 0px" }); observer.observe(sentinel); return () => observer.disconnect(); }, []);
   const loadMore = () => {
     if (loadingMore || rowLoading || !hasMore) return;
     const nextPage = page + 1; setLoadingMore(true);
@@ -96,7 +96,7 @@ export default function Home() {
      <SectionTitle title="Continue Watching" action="View All" />
      <div className="scroller">{continueItems.map((item, index) => <ContinueCard key={`continue-${item.id}-${index}`} item={item} progress={[72, 58, 86, 74][index] ?? 40} onOpen={() => setSelected({ id: item.id, type: itemType(item) })} />)}</div>
      <div className="infinite-feed">{feedSections.map(section => <section className="feed-section" key={section.title}><SectionTitle title={section.title} action="View All" /><div className="scroller">{section.items.map((item, index) => <MovieCard key={`${section.title}-${item.id}-${index}`} item={item} onOpen={() => setSelected({ id: item.id, type: itemType(item) })} />)}</div></section>)}</div>
-      <div ref={feedSentinel} className="feed-sentinel" aria-hidden="true" />
+      <div id="scroll-sentinel" ref={feedSentinel} className="feed-sentinel" aria-hidden="true" />
       {feedLoading && <div className="feed-loader" aria-label="Loading more content"><span className="spinner" /></div>}
      <footer>{[[Play, "Home"], [Clock3, "Recent Watch"], [Download, "Downloads"], [UserRound, "Profile"]].map(([Icon, label]: any, i) => <button key={label} onClick={() => setNav(i)} className={nav === i ? "nav-active" : ""}><Icon fill={i === 0 && nav === 0 ? "currentColor" : "none"} /><span>{label}</span></button>)}</footer>
   </main>;
