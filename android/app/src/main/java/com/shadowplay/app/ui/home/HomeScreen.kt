@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.border
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -80,7 +80,7 @@ private fun HomeScreen(state: HomeUiState, onCategory: (String) -> Unit, onNav: 
 
 @Composable private fun ScaffoldWithNav(selected: Int, onNav: (Int) -> Unit, content: @Composable () -> Unit) {
     androidx.compose.material3.Scaffold(containerColor = Color(0xFF0D0D0D), bottomBar = {
-        Row(Modifier.fillMaxWidth().background(Color(0xFF151515)).navigationBarsPadding().height(72.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().background(Color(0xFF151515)).navigationBarsPadding().height(88.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
             listOf(Icons.Default.PlayArrow to "Home", Icons.Default.AccessTime to "Recent Watch", Icons.Default.Download to "Downloads", Icons.Default.Person to "Profile").forEachIndexed { i, pair ->
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(80.dp).clickable { onNav(i) }) {
                     Icon(pair.first, pair.second, tint = if (selected == i) Red else Muted, modifier = Modifier.size(21.dp))
@@ -92,9 +92,9 @@ private fun HomeScreen(state: HomeUiState, onCategory: (String) -> Unit, onNav: 
 }
 
 @Composable private fun Header(selected: String, onCategory: (String) -> Unit) {
-    Column(Modifier.padding(top = 24.dp, bottom = 14.dp)) {
+    Column(Modifier.padding(top = 25.dp, bottom = 16.dp)) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(31.dp).clip(RoundedCornerShape(9.dp)).background(Red), contentAlignment = Alignment.Center) { Icon(Icons.Default.PlayArrow, null, tint = Color.White, modifier = Modifier.size(20.dp)) }
+            Icon(Icons.Default.PlayArrow, null, tint = Red, modifier = Modifier.size(38.dp))
             Spacer(Modifier.width(9.dp)); Text("SHADOW", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.5.sp); Text(" PLAY", color = Red, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.5.sp)
             Spacer(Modifier.weight(1f)); IconButton(onClick = {}) { Icon(Icons.Default.Search, "Search", tint = Color.White) }
         }
@@ -105,12 +105,13 @@ private fun HomeScreen(state: HomeUiState, onCategory: (String) -> Unit, onNav: 
 }
 
 @Composable private fun HeroBanner() {
-    Box(Modifier.fillMaxWidth().height(312.dp).padding(horizontal = 20.dp).clip(RoundedCornerShape(18.dp))) {
+    Box(Modifier.fillMaxWidth().height(380.dp).padding(horizontal = 20.dp).clip(RoundedCornerShape(17.dp))) {
         AsyncImage("https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200", "Solo Leveling hero", Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(listOf(Color(0xF20D0D0D), Color(0x880D0D0D), Color.Transparent))))
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xE60D0D0D)))))
         Column(Modifier.align(Alignment.BottomStart).padding(20.dp)) {
             Text("TRENDING NOW", color = Red, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
-            Spacer(Modifier.height(7.dp)); Text("SOLO LEVELING\nSEASON 2", color = Color.White, fontSize = 25.sp, lineHeight = 28.sp, fontWeight = FontWeight.ExtraBold)
+            Spacer(Modifier.height(7.dp)); Text("SOLO LEVELING", color = Color.White, fontSize = 32.sp, lineHeight = 35.sp, fontWeight = FontWeight.ExtraBold); Text("SEASON 2", color = Red, fontSize = 26.sp, lineHeight = 31.sp, fontWeight = FontWeight.ExtraBold)
             Spacer(Modifier.height(7.dp)); Text("Sung Jinwoo rises from the shadows to\nface a new level of danger.", color = Color(0xFFD0D0D0), fontSize = 11.sp, lineHeight = 16.sp)
             Spacer(Modifier.height(14.dp)); Surface(onClick = {}, color = Red, shape = RoundedCornerShape(7.dp)) { Row(Modifier.padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.PlayArrow, null, tint = Color.White, modifier = Modifier.size(17.dp)); Spacer(Modifier.width(5.dp)); Text("Watch Now", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp) } }
         }
@@ -120,8 +121,8 @@ private fun HomeScreen(state: HomeUiState, onCategory: (String) -> Unit, onNav: 
 
 @Composable private fun SectionHeader(title: String, action: String?) { Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 25.dp, bottom = 13.dp), verticalAlignment = Alignment.CenterVertically) { Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp); Spacer(Modifier.weight(1f)); action?.let { Text(it, color = Red, fontSize = 12.sp, fontWeight = FontWeight.SemiBold) } } }
 
-@Composable private fun CategoryGrid() { val categories = listOf("Anime" to Icons.Default.Star, "Bollywood" to Icons.Default.Tv, "Hollywood" to Icons.Default.Star, "TV Shows" to Icons.Default.Tv); Column(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { categories.chunked(2).forEach { row -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { row.forEach { (name, icon) -> Surface(Modifier.weight(1f), color = Card, shape = RoundedCornerShape(12.dp), onClick = {}) { Row(Modifier.padding(13.dp), verticalAlignment = Alignment.CenterVertically) { Box(Modifier.size(33.dp).clip(CircleShape).background(Color(0x22E50914)), contentAlignment = Alignment.Center) { Icon(icon, null, tint = Red, modifier = Modifier.size(18.dp)) }; Spacer(Modifier.width(10.dp)); Text(name, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold) } } } } } }
+@Composable private fun CategoryGrid() { val categories = listOf("Anime" to Icons.Default.Star, "Bollywood" to Icons.Default.Tv, "Hollywood" to Icons.Default.Star, "TV Shows" to Icons.Default.Tv); Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) { categories.forEach { (name, icon) -> Surface(Modifier.weight(1f).height(140.dp), color = Card, shape = RoundedCornerShape(12.dp), onClick = {}) { Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { Icon(icon, null, tint = Red, modifier = Modifier.size(54.dp)); Spacer(Modifier.height(10.dp)); Text(name, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium) } } } } }
 
-@Composable private fun ContinueRow(items: List<ContinueItem>) { LazyRow(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(items, key = { it.title }) { item -> Column(Modifier.width(188.dp)) { Box(Modifier.fillMaxWidth().height(108.dp).clip(RoundedCornerShape(12.dp))) { AsyncImage(item.image, item.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop); Box(Modifier.fillMaxSize().background(Color(0x66000000))); Surface(Modifier.align(Alignment.Center), color = Color(0xCCFFFFFF), shape = CircleShape, onClick = {}) { Icon(Icons.Default.PlayArrow, null, tint = Color.Black, modifier = Modifier.padding(8.dp).size(19.dp)) }; Icon(Icons.Default.MoreVert, null, tint = Color.White, modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)) ; Box(Modifier.align(Alignment.BottomStart).fillMaxWidth(item.progress).height(3.dp).background(Red)) }; Spacer(Modifier.height(8.dp)); Text(item.title, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis); Text(item.episode, color = Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 3.dp)) } } } }
+@Composable private fun ContinueRow(items: List<ContinueItem>) { LazyRow(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) { items(items, key = { it.title }) { item -> Box(Modifier.width(240.dp).height(290.dp).clip(RoundedCornerShape(13.dp))) { AsyncImage(item.image, item.title, Modifier.fillMaxSize(), contentScale = ContentScale.Crop); Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xEE0D0D0D))))); Surface(Modifier.align(Alignment.Center), color = Color.Transparent, shape = CircleShape, onClick = {}) { Icon(Icons.Default.PlayArrow, null, tint = Color.White, modifier = Modifier.size(50.dp).border(1.dp, Color.White, CircleShape).padding(9.dp)) }; Icon(Icons.Default.MoreVert, null, tint = Color.White, modifier = Modifier.align(Alignment.TopEnd).padding(11.dp).size(25.dp)); Column(Modifier.align(Alignment.BottomStart).padding(15.dp)) { Text(item.title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 17.sp, maxLines = 1, overflow = TextOverflow.Ellipsis); Text(item.episode, color = Color.White, fontSize = 14.sp, modifier = Modifier.padding(top = 5.dp)); Box(Modifier.padding(top = 15.dp).fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(Color(0xFF555555))) { Box(Modifier.fillMaxWidth(item.progress).fillMaxSize().background(Red)) } } } } } }
 
-@Composable private fun MovieRow(items: List<Movie>) { LazyRow(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(items, key = { it.title }) { item -> Column(Modifier.width(124.dp)) { AsyncImage(item.image, item.title, Modifier.fillMaxWidth().height(172.dp).clip(RoundedCornerShape(11.dp)), contentScale = ContentScale.Crop); Text(item.title, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.dp)); Text(item.duration, color = Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 3.dp)) } } } }
+@Composable private fun MovieRow(items: List<Movie>) { LazyRow(contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) { items(items, key = { it.title }) { item -> Column(Modifier.width(176.dp)) { AsyncImage(item.image, item.title, Modifier.fillMaxWidth().height(252.dp).clip(RoundedCornerShape(11.dp)), contentScale = ContentScale.Crop); Text(item.title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.dp)); Text(item.duration, color = Muted, fontSize = 14.sp, modifier = Modifier.padding(top = 4.dp)) } } } }
