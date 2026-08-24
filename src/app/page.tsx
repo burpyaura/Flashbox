@@ -10,7 +10,7 @@ const fallback = (label: string) => <div className="image-fallback">{label}</div
 export default function Home() {
   const [tab, setTab] = useState("Home");
   const [nav, setNav] = useState(0);
-  const [hero, setHero] = useState<TmdbItem[]>([]);
+  const [hero, setHero] = useState<HeroItem[]>([]);
   const [popular, setPopular] = useState<TmdbItem[]>([]);
   const [continueItems, setContinueItems] = useState<TmdbItem[]>([]);
   const [heroIndex, setHeroIndex] = useState(0);
@@ -23,8 +23,8 @@ export default function Home() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  useEffect(() => { getTrending().then(data => { const items = data.results.filter(item => item.media_type === "movie" || item.media_type === "tv").slice(0, 5); setHero(items); setContinueItems(items.slice(0, 4)); }).catch(() => setError(true)).finally(() => setLoading(false)); }, []);
-  useEffect(() => { if (!hero.length) return; const timer = window.setInterval(() => setHeroIndex(index => (index + 1) % hero.length), 5000); return () => window.clearInterval(timer); }, [hero.length]);
+  useEffect(() => { Promise.all([getBollywood(1), getAnime(1)]).then(([bollywood, anime]) => { const latestBollywood = bollywood.results.slice(0, 3).map(item => ({ ...item, heroLabel: "LATEST BOLLYWOOD" as const })); const popularAnime = anime.results.slice(0, 3).map(item => ({ ...item, media_type: "tv" as const, heroLabel: "POPULAR ANIME" as const })); const items = latestBollywood.flatMap((item, index) => [item, popularAnime[index]]).filter(Boolean) as HeroItem[]; setHero(items); setContinueItems(items.slice(0, 4)); }).catch(() => setError(true)).finally(() => setLoading(false)); }, []);
+  useEffect(() => { if (!hero.length) return; const timer = window.setInterval(() => setHeroIndex(index => (index + 1) % hero.length), 4000); return () => window.clearInterval(timer); }, [hero.length]);
   useEffect(() => {
     setRowLoading(true);
     setPage(1); setHasMore(true);
@@ -57,7 +57,8 @@ export default function Home() {
   </main>;
 }
 
-function Hero({ item, index, count, onOpen }: { item: TmdbItem; index: number; count: number; onOpen: () => void }) { return <section className="hero" style={{ backgroundImage: `linear-gradient(90deg,rgba(0,0,0,.97),rgba(0,0,0,.62) 48%,rgba(0,0,0,.18)),linear-gradient(0deg,rgba(0,0,0,.88),transparent 65%),url(${imageUrl(item.backdrop_path, "https://image.tmdb.org/t/p/w780") ?? ""})` }}><div className="hero-copy"><span className="eyebrow">TRENDING NOW</span><h1>{itemTitle(item)}</h1><h2>{itemYear(item) || "SEASON 2"}</h2><p>{item.overview || "Discover your next story from the shadows."}</p><button className="watch" onClick={onOpen}><Play size={14} fill="currentColor" /> Watch Now</button></div><div className="dots">{Array.from({ length: count }, (_, dot) => <i className={dot === index ? "selected" : ""} key={dot} />)}</div></section>; }
+type HeroItem = TmdbItem & { heroLabel: "LATEST BOLLYWOOD" | "POPULAR ANIME" };
+function Hero({ item, index, count, onOpen }: { item: HeroItem; index: number; count: number; onOpen: () => void }) { const heroImage = imageUrl(item.backdrop_path, "https://image.tmdb.org/t/p/original") ?? imageUrl(item.poster_path, "https://image.tmdb.org/t/p/original") ?? ""; return <section className="hero" onClick={onOpen} style={{ backgroundImage: `linear-gradient(90deg,rgba(0,0,0,.97),rgba(0,0,0,.62) 48%,rgba(0,0,0,.18)),linear-gradient(0deg,rgba(0,0,0,.88),transparent 65%),url(${heroImage})` }}><div className="hero-copy"><span className="eyebrow hero-badge">{item.heroLabel}</span><h1>{itemTitle(item)}</h1><h2>{itemYear(item) || "COMING SOON"}</h2><p>{item.overview || "Discover your next story from the shadows."}</p><button className="watch" onClick={event => { event.stopPropagation(); onOpen(); }}><Play size={14} fill="currentColor" /> Watch Now</button></div><div className="dots">{Array.from({ length: count }, (_, dot) => <i className={dot === index ? "selected" : ""} key={dot} />)}</div></section>; }
 function HeroSkeleton() { return <section className="hero skeleton" aria-label="Loading trending content" />; }
 function SectionTitle({ title, action }: { title: string; action?: string }) { return <div className="section-title"><h3>{title}</h3>{action && <button>{action}</button>}</div>; }
 function ContinueCard({ item, progress, onOpen }: { item: TmdbItem; progress: number; onOpen: () => void }) { return <article className="continue-card" onClick={onOpen} style={{ backgroundImage: `linear-gradient(transparent 30%,#090909 100%),url(${imageUrl(item.poster_path) ?? ""})` }}><MoreVertical className="more" /><span className="play-ring"><Play fill="currentColor" /></span><div className="card-copy"><strong>{itemTitle(item)}</strong><small>{itemYear(item) || "S1 E1"}</small><span className="progress"><i style={{ width: `${progress}%` }} /></span></div></article>; }

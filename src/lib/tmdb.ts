@@ -40,7 +40,7 @@ export const getTrending = () => tmdb<TmdbResponse>("/trending/all/day");
 export const getPopularMovies = (page = 1) => tmdb<TmdbResponse>(`/movie/popular?page=${page}`);
 export const getTopRatedMovies = (page = 1) => tmdb<TmdbResponse>(`/movie/top_rated?page=${page}`);
 export const getPopularTv = (page = 1) => tmdb<TmdbResponse>(`/tv/popular?page=${page}`);
-export const getAnime = (page = 1) => tmdb<TmdbResponse>(`/discover/tv?with_genres=16&sort_by=popularity.desc&page=${page}`);
+export const getAnime = (page = 1) => tmdb<TmdbResponse>(`/discover/tv?with_genres=16&with_original_language=ja&sort_by=popularity.desc&page=${page}`);
 export const getBollywood = (page = 1) => tmdb<TmdbResponse>(`/discover/movie?with_original_language=hi&region=IN&sort_by=popularity.desc&page=${page}`);
 export const getDetails = (id: number, type: MediaType) => tmdb<TmdbItem>(`/${type}/${id}?append_to_response=external_ids`);
 export const searchTmdb = (query: string) => tmdb<TmdbResponse>(`/search/multi?query=${encodeURIComponent(query)}&include_adult=false&page=1`);
