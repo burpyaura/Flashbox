@@ -2,6 +2,9 @@ package com.shadowplay.app.ui.home
 
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.shadowplay.app.data.TmdbRepository
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,8 +30,15 @@ import kotlinx.coroutines.flow.asStateFlow
 )
 
 class HomeViewModel : ViewModel() {
+    private val repository = TmdbRepository()
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+    init {
+        viewModelScope.launch {
+            runCatching { repository.popularMovies() }.onSuccess { movies -> _uiState.value = _uiState.value.copy(popularMovies = movies) }
+            runCatching { repository.trending() }.onSuccess { items -> _uiState.value = _uiState.value.copy(continueWatching = items) }
+        }
+    }
     fun selectCategory(value: String) { _uiState.value = _uiState.value.copy(selectedCategory = value) }
     fun selectNav(value: Int) { _uiState.value = _uiState.value.copy(selectedNav = value) }
 }
