@@ -18,6 +18,7 @@ nav::-webkit-scrollbar { display:none; }
 nav button { flex:none; height:28px; padding:6px 14px; border-radius:14px; background:transparent; color:#aaa; font-size:12px; line-height:16px; }
 nav button.active { background:var(--red); color:#fff; }
 .hero { min-height:0; overflow:hidden; border:1px solid #292d2b; border-radius:12px; background:#1a1a1a; cursor:pointer; box-shadow:0 12px 28px #0004; transition:transform .25s ease; }
+.hero.skeleton { min-height:300px; }
 .hero:hover { transform:translateY(-2px); }
 .hero-image { height:180px; overflow:hidden; background:#111; }
 .hero-image img { display:block; width:100%; height:100%; object-fit:cover; }
