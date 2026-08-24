@@ -52,6 +52,7 @@ export const getGlobalTrending = (page = 1) => tmdb<TmdbResponse>(`/trending/all
 export const getAnime = (page = 1) => tmdb<TmdbResponse>(`/discover/tv?with_genres=16&with_original_language=ja&sort_by=popularity.desc&page=${page}`);
 export const getBollywood = (page = 1) => tmdb<TmdbResponse>(`/discover/movie?with_original_language=hi&sort_by=popularity.desc&page=${page}`);
 export const getDetails = (id: number, type: MediaType) => tmdb<TmdbItem>(`/${type}/${id}?append_to_response=external_ids`);
+export const getSimilar = (id: number, type: MediaType) => tmdb<TmdbResponse>(`/${type}/${id}/similar`);
 export type TmdbEpisode = { id: number; episode_number: number; name: string; overview?: string; still_path?: string | null };
 export const getSeason = (id: number, season: number) => tmdb<{ episodes: TmdbEpisode[] }>(`/tv/${id}/season/${season}`);
 export const searchTmdb = (query: string) => tmdb<TmdbResponse>(`/search/multi?query=${encodeURIComponent(query)}&include_adult=false&page=1`);

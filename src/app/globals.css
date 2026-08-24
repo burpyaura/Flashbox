@@ -33,25 +33,6 @@ h2 { margin:2px 0 4px; color:var(--red); font-size:14px; line-height:16px; }
 .hero h1 { margin:8px 0 5px; color:#fff; font-size:18px; line-height:22px; }
 .hero p { display:-webkit-box; max-width:none; min-height:28px; margin:0 0 11px; overflow:hidden; color:#ccc; font-size:11px; line-height:14px; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
 .hero-bottom { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-.inline-player { margin:8px 0 18px; overflow:hidden; border:1px solid #303432; border-radius:10px; background:#111413; box-shadow:0 14px 34px #0007; }
-.inline-frame { position:relative; aspect-ratio:16/9; overflow:hidden; background:#000; }
-.inline-frame iframe { display:block; width:100%; height:100%; border:0; }
-.inline-backdrop,.inline-backdrop img { display:block; width:100%; height:100%; }
-.inline-backdrop { position:relative; display:grid; place-items:center; background:#171918; color:#aaa; }
-.inline-backdrop img { position:absolute; inset:0; object-fit:cover; opacity:.65; }
-.inline-backdrop:after { position:absolute; inset:0; background:linear-gradient(90deg,#000b,#0002 60%,#0009); content:""; }
-.inline-play { position:absolute; top:50%; left:50%; z-index:1; display:grid; width:64px; height:64px; place-items:center; transform:translate(-50%,-50%); border:2px solid #fff; border-radius:50%; background:var(--red); box-shadow:0 8px 24px #0009; }
-.inline-play svg { margin-left:4px; }
-.inline-caption { position:absolute; bottom:14px; left:16px; z-index:1; display:flex; flex-direction:column; gap:4px; }
-.inline-caption span { color:var(--red); font-size:9px; font-weight:700; letter-spacing:1px; }
-.inline-caption strong { font-size:18px; }
-.inline-fallback { display:block; width:calc(100% - 24px); margin:12px; padding:10px; border-radius:5px; background:var(--red); font-size:11px; font-weight:700; text-align:center; }
-.inline-controls { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border-top:1px solid #292d2b; }
-.inline-now { min-width:0; overflow:hidden; color:#aaa; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
-.inline-servers { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:5px; }
-.inline-servers>span { align-self:center; color:#777; font-size:10px; }
-.inline-servers button { padding:6px 8px; border:1px solid #303633; border-radius:4px; background:#1a1e1c; color:#aaa; font-size:9px; }
-.inline-servers button.active { border-color:var(--red); background:#321113; color:#fff; }
 .watch { display:flex; align-items:center; gap:5px; height:32px; padding:4px 12px; border-radius:5px; background:var(--red); font-size:12px; font-weight:700; }
 .watch svg { width:14px; height:14px; }
 .dots { display:flex; align-items:center; gap:5px; }
@@ -121,7 +102,36 @@ footer .nav-active { color:var(--red); }
 .details-play { display:flex; width:100%; height:36px; align-items:center; justify-content:center; gap:6px; margin-top:18px; border-radius:6px; background:var(--red); font-size:12px; font-weight:700; }
 .tmdb-id { color:#666; font-size:10px; text-align:center; }
 .details-skeleton { width:100%; height:300px; margin-top:80px; border-radius:10px; }
-@media (max-width:600px) { .inline-controls { align-items:stretch; flex-direction:column; } .inline-servers { justify-content:flex-start; } .inline-caption strong { font-size:15px; } }
+.watch-page { min-height:100vh; max-width:1000px; margin:auto; padding:0 12px 40px; background:#090a0a; }
+.watch-header { display:flex; height:54px; align-items:center; justify-content:space-between; }
+.watch-header strong { color:#fff; font-size:12px; letter-spacing:1px; }
+.watch-header strong span,.watch-kicker { color:var(--red); }
+.watch-back { display:flex; align-items:center; gap:6px; padding:7px 10px; border-radius:5px; background:#181b1a; color:#ddd; font-size:11px; }
+.watch-player { overflow:hidden; border:1px solid #292d2b; border-radius:8px; background:#000; box-shadow:0 18px 40px #0008; }
+.watch-player iframe { display:block; width:100%; aspect-ratio:16/9; border:0; }
+.watch-fallback { display:block; width:calc(100% - 24px); margin:12px; padding:10px; border-radius:5px; background:var(--red); font-size:11px; font-weight:700; }
+.watch-servers { display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:10px 12px; border-top:1px solid #292d2b; }
+.watch-servers span { margin-right:3px; color:#888; font-size:10px; }
+.watch-servers button { padding:7px 9px; border:1px solid #303633; border-radius:5px; background:#1a1e1c; color:#aaa; font-size:10px; }
+.watch-servers button.active { border-color:var(--red); background:#321113; color:#fff; }
+.watch-info { padding:20px 2px 0; }
+.watch-title-row { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+.watch-kicker { margin:0 0 4px; font-size:9px; font-weight:700; letter-spacing:1px; }
+.watch-info h1 { margin:0; font-size:25px; line-height:29px; }
+.watch-meta { margin:7px 0 0; color:#aaa; font-size:11px; }
+.watch-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; }
+.watch-actions button { display:flex; align-items:center; gap:5px; padding:8px 9px; border-radius:5px; background:#191c1b; color:#ccc; font-size:10px; }
+.watch-actions button.active { color:var(--red); }
+.watch-genres { display:flex; flex-wrap:wrap; gap:6px; margin-top:13px; }
+.watch-genres span { padding:5px 8px; border:1px solid #3a403d; border-radius:12px; color:#bbb; font-size:10px; }
+.watch-overview { margin-top:20px; padding-top:14px; border-top:1px solid #252a28; }
+.watch-overview h2 { margin:0 0 7px; color:#fff; font-size:15px; }
+.watch-overview p { max-width:760px; margin:0; color:#bbb; font-size:12px; line-height:18px; }
+.related { margin-top:22px; }
+.related .section-title { margin-top:0; }
+.related .section-title h2 { color:#fff; font-size:16px; }
+.watch-loading { width:100%; aspect-ratio:16/9; margin-top:10px; border-radius:8px; }
+@media (max-width:600px) { .watch-title-row { flex-direction:column; } .watch-actions { justify-content:flex-start; } .watch-info h1 { font-size:21px; line-height:25px; } }
 .search-screen { min-height:100vh; max-width:680px; margin:auto; padding:18px 16px 34px; background:radial-gradient(circle at 90% 0%,#1b1515 0,#090a0a 32%); }
 .search-screen-header { display:flex; height:42px; align-items:center; gap:9px; }
 .search-back { display:grid; width:34px; height:34px; place-items:center; flex:none; border:1px solid var(--line); border-radius:50%; background:#151817; }
