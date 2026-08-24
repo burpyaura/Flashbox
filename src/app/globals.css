@@ -6,7 +6,7 @@ html,body { margin:0; background:var(--bg); color:#fff; }
 body { font-family:Georgia,"Times New Roman",serif; }
 button { border:0; color:inherit; font:inherit; cursor:pointer; }
 .shadow-app { min-height:100vh; max-width:900px; margin:auto; padding:16px 12px 72px; background:var(--bg); }
-.topbar { position:relative; }
+.topbar { position:sticky; top:0; z-index:4; padding-top:2px; background:linear-gradient(var(--bg) 78%,transparent); }
 .brand { display:flex; align-items:center; font-size:18px; font-weight:700; letter-spacing:.3px; }
 .brand-mark { display:grid; place-items:center; width:20px; height:20px; margin-right:5px; color:var(--red); }
 .brand-mark svg { width:18px; height:18px; }
@@ -60,6 +60,10 @@ small { color:#aaa; font-size:10px; line-height:12px; }
 .movie strong,.movie small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .movie strong { margin-top:5px; font-size:12px; }
 .movie small { margin-top:2px; font-size:10px; }
+.feed-section { margin-top:20px; }
+.feed-loader { display:grid; height:64px; place-items:center; }
+.spinner { width:22px; height:22px; border:3px solid #353a38; border-top-color:var(--red); border-radius:50%; animation:spin .75s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
 footer { position:fixed; right:0; bottom:0; left:0; z-index:3; display:flex; height:56px; align-items:center; justify-content:space-around; border-top:1px solid #222; background:#121212; }
 footer button { display:flex; min-width:70px; align-items:center; flex-direction:column; gap:2px; background:none; color:#888; font-size:10px; }
 footer svg { width:20px; height:20px; }

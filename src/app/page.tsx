@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Bookmark, Clock3, Download, MoreVertical, Play, Search, Star, Tv, UserRound, X, Trash2, ArrowRight } from "lucide-react";
-import { getAnime, getBollywood, getDetails, getPopularMovies, getPopularTv, getTopRatedMovies, getTrending, imageUrl, itemRuntime, itemTitle, itemType, itemYear, MediaType, searchTmdb, TmdbItem } from "@/lib/tmdb";
+import { getActionMovies, getAnime, getBollywood, getDetails, getPopularMovies, getPopularTv, getTopRatedMovies, getTrending, getTrendingTv, getUpcomingMovies, imageUrl, itemRuntime, itemTitle, itemType, itemYear, MediaType, searchTmdb, TmdbItem } from "@/lib/tmdb";
 
 type Selected = { id: number; type: MediaType };
+type FeedSection = { title: string; items: TmdbItem[] };
 const fallback = (label: string) => <div className="image-fallback">{label}</div>;
 
 export default function Home() {
@@ -22,6 +23,10 @@ export default function Home() {
   const [page, setPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [feedSections, setFeedSections] = useState<FeedSection[]>([]);
+  const [feedPage, setFeedPage] = useState(0);
+  const [feedLoading, setFeedLoading] = useState(false);
+  const feedLock = useRef(false);
 
   useEffect(() => { Promise.all([getBollywood(1), getAnime(1)]).then(([bollywood, anime]) => { const latestBollywood = bollywood.results.slice(0, 3).map(item => ({ ...item, heroLabel: "LATEST BOLLYWOOD" as const })); const popularAnime = anime.results.slice(0, 3).map(item => ({ ...item, media_type: "tv" as const, heroLabel: "POPULAR ANIME" as const })); const items = latestBollywood.flatMap((item, index) => [item, popularAnime[index]]).filter(Boolean) as HeroItem[]; setHero(items); setContinueItems(items.slice(0, 4)); }).catch(() => setError(true)).finally(() => setLoading(false)); }, []);
   useEffect(() => { if (!hero.length) return; const timer = window.setInterval(() => setHeroIndex(index => (index + 1) % hero.length), 4000); return () => window.clearInterval(timer); }, [hero.length]);
@@ -31,6 +36,25 @@ export default function Home() {
     const request = tab === "Movies" ? getPopularMovies(1) : tab === "Anime" ? getAnime(1) : tab === "TV Shows" ? getPopularTv(1) : tab === "Bollywood" ? getBollywood(1) : getTopRatedMovies(1);
     request.then(data => setPopular(data.results)).catch(() => setPopular([])).finally(() => setRowLoading(false));
   }, [tab]);
+  const loadFeedPage = () => {
+    if (feedLock.current || !hasMore) return;
+    feedLock.current = true; setFeedLoading(true);
+    const nextPage = feedPage + 1;
+    Promise.all([getTopRatedMovies(nextPage), getTrendingTv(nextPage), getActionMovies(nextPage), getAnime(nextPage), getUpcomingMovies(nextPage)]).then(([classics, tv, action, anime, upcoming]) => {
+      const batch: FeedSection[] = [
+        { title: "Top Rated Classics", items: classics.results },
+        { title: "Trending TV & Web Series", items: tv.results.map(item => ({ ...item, media_type: "tv" as const })) },
+        { title: "Action & Adventure Specials", items: action.results },
+        { title: "Popular Anime Collections", items: anime.results.map(item => ({ ...item, media_type: "tv" as const })) },
+        { title: "Upcoming Releases", items: upcoming.results },
+      ];
+      setFeedSections(current => current.length ? current.map((section, index) => ({ ...section, items: [...section.items, ...batch[index].items] })) : batch);
+      setFeedPage(nextPage);
+      setHasMore(batch.some(section => section.items.length > 0));
+    }).catch(() => setHasMore(false)).finally(() => { feedLock.current = false; setFeedLoading(false); });
+  };
+  useEffect(() => { loadFeedPage(); }, []);
+  useEffect(() => { const onScroll = () => { if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 700) loadFeedPage(); }; window.addEventListener("scroll", onScroll, { passive: true }); return () => window.removeEventListener("scroll", onScroll); }, [feedPage, hasMore]);
   const loadMore = () => {
     if (loadingMore || rowLoading || !hasMore) return;
     const nextPage = page + 1; setLoadingMore(true);
@@ -51,9 +75,11 @@ export default function Home() {
     <div className="categories">{[["Anime", Star], ["Bollywood", Play], ["Hollywood", Star], ["TV Shows", Tv]].map(([label, Icon]: any) => <button className="category" key={label} onClick={() => setTab(label === "Anime" ? "Anime" : label === "Bollywood" ? "Bollywood" : label === "TV Shows" ? "TV Shows" : "Movies")}><Icon fill="currentColor" /><span>{label}</span></button>)}</div>
     <SectionTitle title={tab === "Home" ? "Popular Movies" : tab} action="View All" />
     <div className="scroller" onScroll={event => { const target = event.currentTarget; if (target.scrollLeft + target.clientWidth >= target.scrollWidth - 220) loadMore(); }}>{rowLoading ? Array.from({ length: 6 }, (_, index) => <div className="movie skeleton" key={index} />) : <>{popular.map(item => <MovieCard key={`${itemType(item)}-${item.id}`} item={item} onOpen={() => setSelected({ id: item.id, type: itemType(item) })} />)}{loadingMore && <div className="movie skeleton" />}</>}</div>
-    <SectionTitle title="Continue Watching" action="View All" />
-    <div className="scroller">{continueItems.map((item, index) => <ContinueCard key={item.id} item={item} progress={[72, 58, 86, 74][index] ?? 40} onOpen={() => setSelected({ id: item.id, type: itemType(item) })} />)}</div>
-    <footer>{[[Play, "Home"], [Clock3, "Recent Watch"], [Download, "Downloads"], [UserRound, "Profile"]].map(([Icon, label]: any, i) => <button key={label} onClick={() => setNav(i)} className={nav === i ? "nav-active" : ""}><Icon fill={i === 0 && nav === 0 ? "currentColor" : "none"} /><span>{label}</span></button>)}</footer>
+     <SectionTitle title="Continue Watching" action="View All" />
+     <div className="scroller">{continueItems.map((item, index) => <ContinueCard key={item.id} item={item} progress={[72, 58, 86, 74][index] ?? 40} onOpen={() => setSelected({ id: item.id, type: itemType(item) })} />)}</div>
+     <div className="infinite-feed">{feedSections.map(section => <section className="feed-section" key={section.title}><SectionTitle title={section.title} action="View All" /><div className="scroller">{section.items.map(item => <MovieCard key={`${section.title}-${itemType(item)}-${item.id}`} item={item} onOpen={() => setSelected({ id: item.id, type: itemType(item) })} />)}</div></section>)}</div>
+     {feedLoading && <div className="feed-loader" aria-label="Loading more content"><span className="spinner" /></div>}
+     <footer>{[[Play, "Home"], [Clock3, "Recent Watch"], [Download, "Downloads"], [UserRound, "Profile"]].map(([Icon, label]: any, i) => <button key={label} onClick={() => setNav(i)} className={nav === i ? "nav-active" : ""}><Icon fill={i === 0 && nav === 0 ? "currentColor" : "none"} /><span>{label}</span></button>)}</footer>
   </main>;
 }
 
