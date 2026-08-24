@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, Bookmark, Clock3, Download, MoreVertical, Play, Search, Star, Tv, UserRound, X } from "lucide-react";
+import { ArrowLeft, Bookmark, Clock3, Download, MoreVertical, Play, Search, Star, Tv, UserRound, X, Trash2, ArrowRight } from "lucide-react";
 import { getAnime, getBollywood, getDetails, getPopularMovies, getPopularTv, getTopRatedMovies, getTrending, imageUrl, itemRuntime, itemTitle, itemType, itemYear, MediaType, searchTmdb, TmdbItem } from "@/lib/tmdb";
 
 type Selected = { id: number; type: MediaType };
@@ -19,9 +19,6 @@ export default function Home() {
   const [rowLoading, setRowLoading] = useState(false);
   const [error, setError] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<TmdbItem[]>([]);
-  const [searching, setSearching] = useState(false);
   const [page, setPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -40,22 +37,14 @@ export default function Home() {
     const request = tab === "Movies" ? getPopularMovies(nextPage) : tab === "Anime" ? getAnime(nextPage) : tab === "TV Shows" ? getPopularTv(nextPage) : tab === "Bollywood" ? getBollywood(nextPage) : getTopRatedMovies(nextPage);
     request.then(data => { setPopular(items => [...items, ...data.results]); setPage(nextPage); setHasMore(data.results.length > 0); }).catch(() => setHasMore(false)).finally(() => setLoadingMore(false));
   };
-  useEffect(() => {
-    if (!query.trim()) { setSearchResults([]); setSearching(false); return; }
-    const timer = window.setTimeout(() => {
-      setSearching(true);
-      searchTmdb(query.trim()).then(data => setSearchResults(data.results.filter(item => (item.media_type === "movie" || item.media_type === "tv") && (item.poster_path || item.backdrop_path)).slice(0, 8))).catch(() => setSearchResults([])).finally(() => setSearching(false));
-    }, 350);
-    return () => window.clearTimeout(timer);
-  }, [query]);
 
   if (selected) return <DetailsScreen selected={selected} onBack={() => setSelected(null)} />;
+  if (searchOpen) return <SearchScreen onClose={() => setSearchOpen(false)} onOpen={setSelected} />;
   const activeHero = hero[heroIndex];
   return <main className="shadow-app">
     <header className="topbar"><div className="brand"><span className="brand-mark"><Play fill="currentColor" /></span><b>SHADOW</b><b className="red"> PLAY</b></div><button className="search-button" onClick={() => setSearchOpen(value => !value)} aria-label="Search">{searchOpen ? <X className="search" /> : <Search className="search" />}</button>
       <nav>{["Home", "Movies", "Anime", "TV Shows", "Bollywood"].map(item => <button key={item} onClick={() => setTab(item)} className={tab === item ? "active" : ""}>{item}</button>)}</nav>
     </header>
-    {searchOpen && <section className="search-panel"><div className="search-input"><Search size={16} /><input autoFocus value={query} onChange={event => setQuery(event.target.value)} placeholder="Search movies, shows, anime..." /><button onClick={() => setQuery("")}><X size={15} /></button></div>{query && <div className="search-results">{searching ? <span className="search-status">Searching TMDB...</span> : searchResults.length ? searchResults.map(item => <button className="search-result" key={`${itemType(item)}-${item.id}`} onClick={() => setSelected({ id: item.id, type: itemType(item) })}>{imageUrl(item.poster_path) ? <img src={imageUrl(item.poster_path)!} alt="" /> : <span className="result-fallback" />}<span><strong>{itemTitle(item)}</strong><small>{itemType(item).toUpperCase()} · {itemYear(item) || "—"}</small></span></button>) : <span className="search-status">No TMDB results found.</span>}</div>}</section>}
     {error && <div className="api-error">TMDB is unavailable right now. Showing safe placeholders.</div>}
     {loading ? <HeroSkeleton /> : activeHero && <Hero item={activeHero} index={heroIndex} count={hero.length} onOpen={() => setSelected({ id: activeHero.id, type: itemType(activeHero) })} />}
     <SectionTitle title="Categories" />
@@ -73,6 +62,29 @@ function HeroSkeleton() { return <section className="hero skeleton" aria-label="
 function SectionTitle({ title, action }: { title: string; action?: string }) { return <div className="section-title"><h3>{title}</h3>{action && <button>{action}</button>}</div>; }
 function ContinueCard({ item, progress, onOpen }: { item: TmdbItem; progress: number; onOpen: () => void }) { return <article className="continue-card" onClick={onOpen} style={{ backgroundImage: `linear-gradient(transparent 30%,#090909 100%),url(${imageUrl(item.poster_path) ?? ""})` }}><MoreVertical className="more" /><span className="play-ring"><Play fill="currentColor" /></span><div className="card-copy"><strong>{itemTitle(item)}</strong><small>{itemYear(item) || "S1 E1"}</small><span className="progress"><i style={{ width: `${progress}%` }} /></span></div></article>; }
 function MovieCard({ item, onOpen }: { item: TmdbItem; onOpen: () => void }) { return <article className="movie" onClick={onOpen}>{imageUrl(item.poster_path) ? <img src={imageUrl(item.poster_path)!} alt="" /> : fallback(itemTitle(item))}<strong>{itemTitle(item)}</strong><small>{itemRuntime(item)}</small></article>; }
+
+function SearchScreen({ onClose, onOpen }: { onClose: () => void; onOpen: (selected: Selected) => void }) {
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<TmdbItem[]>([]);
+  const [ranked, setRanked] = useState<TmdbItem[]>([]);
+  const [trending, setTrending] = useState<TmdbItem[]>([]);
+  const [recent, setRecent] = useState<string[]>([]);
+  const [category, setCategory] = useState("Movie");
+  const [loading, setLoading] = useState(false);
+  useEffect(() => { try { setRecent(JSON.parse(localStorage.getItem("shadow-play-recent") ?? "[]")); } catch { setRecent([]); } getTrending().then(data => { setTrending(data.results.slice(0, 8)); setRanked(data.results.filter(item => item.media_type === "movie" || item.media_type === "tv").slice(0, 8)); }); }, []);
+  useEffect(() => { if (!query.trim()) { setSuggestions([]); setLoading(false); return; } const timer = window.setTimeout(() => { setLoading(true); searchTmdb(query.trim()).then(data => setSuggestions(data.results.filter(item => item.media_type === "movie" || item.media_type === "tv").slice(0, 8))).catch(() => setSuggestions([])).finally(() => setLoading(false)); }, 300); return () => window.clearTimeout(timer); }, [query]);
+  const open = (item: TmdbItem) => { const value = itemTitle(item); const next = [value, ...recent.filter(entry => entry.toLowerCase() !== value.toLowerCase())].slice(0, 8); setRecent(next); localStorage.setItem("shadow-play-recent", JSON.stringify(next)); onOpen({ id: item.id, type: itemType(item) }); };
+  const selectRecent = (value: string) => setQuery(value);
+  const tabs = ["Movie", "Series", "Short TV", "Anime"];
+  const filteredRanked = ranked.filter(item => category === "Movie" ? itemType(item) === "movie" : category === "Anime" ? item.genre_ids?.includes(16) : itemType(item) === "tv");
+  return <main className="search-screen"><header className="search-screen-header"><button onClick={onClose}><ArrowLeft size={20} /></button><div className="search-field"><Search size={17} /><input autoFocus value={query} onChange={event => setQuery(event.target.value)} placeholder="Search movies, series, anime..." /><button onClick={() => setQuery("")}><X size={16} /></button></div><button className="search-submit" onClick={() => suggestions[0] && open(suggestions[0])}>Search</button></header>
+    {!query && <><section className="search-section"><div className="search-section-title"><h2>Recent</h2>{recent.length > 0 && <button onClick={() => { setRecent([]); localStorage.removeItem("shadow-play-recent"); }}><Trash2 size={15} /> Clear</button>}</div><div className="search-chips">{recent.length ? recent.map(value => <button key={value} onClick={() => selectRecent(value)}>{value}</button>) : <span className="empty-search">Your recent searches will appear here.</span>}</div></section><section className="search-section"><h2>🔥 Everyone is searching</h2><div className="search-chips">{trending.map(item => <button key={item.id} onClick={() => setQuery(itemTitle(item))}>{itemTitle(item)}</button>)}</div></section></>}
+    {query && <section className="suggestion-view">{loading ? <div className="suggestion-loading skeleton" /> : suggestions.length ? <><button className="featured-search" onClick={() => open(suggestions[0])}>{imageUrl(suggestions[0].poster_path) ? <img src={imageUrl(suggestions[0].poster_path)!} alt="" /> : fallback(itemTitle(suggestions[0]))}<span><small>TOP MATCH</small><strong>{itemTitle(suggestions[0])}</strong><em>Open details</em></span><ArrowRight size={18} /></button><div className="suggestion-list">{suggestions.slice(1).map(item => <button key={item.id} onClick={() => open(item)}><Search size={15} /><span>{highlight(itemTitle(item), query)}</span><small>{itemYear(item)}</small></button>)}</div></> : <span className="search-status">No matches found on TMDB.</span>}</section>}
+    <section className="search-section ranked-section"><h2>Ranked for you</h2><div className="ranked-tabs">{tabs.map(tab => <button key={tab} onClick={() => setCategory(tab)} className={category === tab ? "active" : ""}>{tab}</button>)}</div><div className="ranked-list">{filteredRanked.map((item, index) => <button className="ranked-item" key={item.id} onClick={() => open(item)}><b>{index + 1}</b>{imageUrl(item.poster_path) ? <img src={imageUrl(item.poster_path)!} alt="" /> : <span className="result-fallback" />}<span><strong>{itemTitle(item)}</strong><small>⭐ {item.vote_average?.toFixed(1) ?? "—"} · {itemYear(item) || "—"}</small><small>{itemType(item) === "tv" ? "Series" : "Movie"} · TMDB</small></span></button>)}</div></section>
+  </main>;
+}
+
+function highlight(value: string, query: string) { const index = value.toLowerCase().indexOf(query.toLowerCase()); if (index < 0) return value; return <>{value.slice(0, index)}<mark>{value.slice(index, index + query.length)}</mark>{value.slice(index + query.length)}</>; }
 
 function DetailsScreen({ selected, onBack }: { selected: Selected; onBack: () => void }) {
   const [item, setItem] = useState<TmdbItem | null>(null);

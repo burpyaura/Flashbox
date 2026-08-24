@@ -87,4 +87,43 @@ footer .nav-active { color:var(--red); }
 .details-play { display:flex; width:100%; height:36px; align-items:center; justify-content:center; gap:6px; margin-top:18px; border-radius:6px; background:var(--red); font-size:12px; font-weight:700; }
 .tmdb-id { color:#666; font-size:10px; text-align:center; }
 .details-skeleton { width:100%; height:300px; margin-top:80px; border-radius:10px; }
+.search-screen { min-height:100vh; padding:12px 12px 28px; background:#0c0c0c; }
+.search-screen-header { display:flex; height:36px; align-items:center; gap:7px; }
+.search-screen-header>button:first-child { display:grid; width:30px; height:30px; place-items:center; flex:none; border-radius:50%; background:#1a1a1a; }
+.search-field { display:flex; height:32px; min-width:0; flex:1; align-items:center; gap:6px; padding:0 8px; border:1px solid #333; border-radius:6px; background:#191919; color:#aaa; }
+.search-field input { min-width:0; flex:1; border:0; outline:0; background:none; color:#fff; font-size:11px; }
+.search-field button { display:grid; padding:0; background:none; color:#aaa; }
+.search-submit { height:30px; padding:0 10px; border-radius:5px; background:var(--red); font-size:11px; font-weight:700; }
+.search-section { margin-top:18px; }
+.search-section h2 { margin:0 0 9px; color:#fff; font-size:15px; }
+.search-section-title { display:flex; align-items:center; justify-content:space-between; }
+.search-section-title button { display:flex; align-items:center; gap:4px; background:none; color:#999; font-size:10px; }
+.search-chips { display:flex; flex-wrap:wrap; gap:7px; }
+.search-chips button { padding:6px 10px; border:1px solid #303030; border-radius:14px; background:#171717; color:#ccc; font-size:10px; }
+.empty-search { color:#666; font-size:11px; }
+.suggestion-view { margin-top:16px; }
+.featured-search { display:flex; width:100%; height:66px; align-items:center; gap:9px; padding:7px; border:1px solid #3b1919; border-radius:8px; background:linear-gradient(90deg,#241010,#171717); text-align:left; }
+.featured-search img,.featured-search>.image-fallback { width:38px; height:52px; flex:none; object-fit:cover; border-radius:5px; }
+.featured-search>span:not(.image-fallback) { display:flex; min-width:0; flex:1; flex-direction:column; gap:2px; }
+.featured-search small { color:var(--red); font-size:8px; }
+.featured-search strong { overflow:hidden; color:#fff; font-size:13px; text-overflow:ellipsis; white-space:nowrap; }
+.featured-search em { color:#999; font-size:9px; font-style:normal; }
+.suggestion-list { margin-top:8px; }
+.suggestion-list button { display:flex; width:100%; height:35px; align-items:center; gap:8px; border-bottom:1px solid #1c1c1c; background:none; color:#bbb; text-align:left; }
+.suggestion-list button>span { flex:1; font-size:12px; }
+.suggestion-list button small { font-size:9px; }
+mark { padding:0; background:none; color:var(--red); }
+.suggestion-loading { height:66px; border-radius:8px; }
+.ranked-section { padding-top:4px; }
+.ranked-tabs { display:flex; gap:14px; border-bottom:1px solid #292929; }
+.ranked-tabs button { position:relative; padding:0 0 7px; background:none; color:#888; font-size:11px; }
+.ranked-tabs button.active { color:#fff; }
+.ranked-tabs button.active:after { position:absolute; right:0; bottom:-1px; left:0; height:2px; background:var(--red); content:""; }
+.ranked-list { display:flex; flex-direction:column; }
+.ranked-item { display:flex; height:65px; align-items:center; gap:8px; border-bottom:1px solid #1d1d1d; background:none; text-align:left; }
+.ranked-item>b { display:grid; width:20px; height:20px; place-items:center; flex:none; border-radius:4px; background:var(--red); font-size:11px; }
+.ranked-item img,.ranked-item>.result-fallback { width:35px; height:52px; flex:none; object-fit:cover; border-radius:4px; }
+.ranked-item>span:not(.result-fallback) { display:flex; min-width:0; flex:1; flex-direction:column; gap:3px; }
+.ranked-item strong { overflow:hidden; font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
+.ranked-item small { font-size:9px; }
 @media (min-width:701px) { .shadow-app { padding-right:12px; padding-left:12px; } }
