@@ -3,34 +3,54 @@ import { MediaType } from "./tmdb";
 export type StreamSource = { id: number; name: string; url: string };
 type StreamContext = { tmdbId: number; mediaType: MediaType; season?: number; episode?: number };
 
-const providerBase = {
-  internal: process.env.NEXT_PUBLIC_STREAM_NODE_1 ?? "/api/streams/primary",
-  customApi: process.env.NEXT_PUBLIC_STREAM_API_URL ?? "",
-  fallback: process.env.NEXT_PUBLIC_STREAM_NODE_3 ?? "/api/streams/fallback",
-};
+// Direct Domain Configurations
+const STREAM_CONFIG = {
+  // Yahan aap apne real domains paste kar sakte hain
+    SERVER_1_BASE: "https://vidsrc.pro/embed",
+      SERVER_2_BASE: "https://embed.smashystream.com/playere.php?tmdb=",
+        SERVER_3_BASE: "https://www.2embed.cc/embed",
+        };
 
-const pathFor = ({ tmdbId, mediaType, season = 1, episode = 1 }: StreamContext) => mediaType === "tv"
-  ? `${mediaType}/${tmdbId}/${season}/${episode}`
-  : `${mediaType}/${tmdbId}`;
+        const formatPath = ({ tmdbId, mediaType, season = 1, episode = 1 }: StreamContext, serverType: number) => {
+          if (serverType === 2) {
+              // SmashyStream Query Format
+                  return mediaType === "tv" 
+                        ? `${tmdbId}&s=${season}&e=${episode}` 
+                              : `${tmdbId}`;
+                                }
 
-const providerRegistry = {
-  internal: (context: StreamContext): StreamSource => ({ id: 1, name: "Server 1 (Auto-Aggregated)", url: `${providerBase.internal.replace(/\/$/, "")}/${pathFor(context)}` }),
-  customApi: async (context: StreamContext): Promise<StreamSource | null> => {
-    if (!providerBase.customApi) return null;
-    try {
-      const response = await fetch(`${providerBase.customApi.replace(/\/$/, "")}/${pathFor(context)}`);
-      if (!response.ok) return null;
-      const data = await response.json() as { url?: unknown; name?: unknown };
-      return typeof data.url === "string" && data.url ? { id: 2, name: typeof data.name === "string" ? data.name : "Server 2 (Custom Gateway)", url: data.url } : null;
-    } catch {
-      return null;
-    }
-  },
-  fallback: (context: StreamContext): StreamSource => ({ id: 3, name: "Server 3 (Fallback Stream)", url: `${providerBase.fallback.replace(/\/$/, "")}/${pathFor(context)}` }),
-};
+                                  // Standard Path Format (VidSrc / 2Embed)
+                                    return mediaType === "tv"
+                                        ? `tv/${tmdbId}/${season}/${episode}`
+                                            : `movie/${tmdbId}`;
+                                            };
 
-export async function fetchMovieStreams(tmdbId: number, mediaType: MediaType, season = 1, episode = 1): Promise<StreamSource[]> {
-  const context = { tmdbId, mediaType, season, episode };
-  const customSource = await providerRegistry.customApi(context);
-  return [providerRegistry.internal(context), ...(customSource ? [customSource] : []), providerRegistry.fallback(context)];
-}
+                                            const providerRegistry = {
+                                              server1: (context: StreamContext): StreamSource => ({
+                                                  id: 1,
+                                                      name: "Server 1",
+                                                          url: `${STREAM_CONFIG.SERVER_1_BASE}/${formatPath(context, 1)}`
+                                                            }),
+                                                              server2: (context: StreamContext): StreamSource => ({
+                                                                  id: 2,
+                                                                      name: "Server 2",
+                                                                          url: `${STREAM_CONFIG.SERVER_2_BASE}${formatPath(context, 2)}`
+                                                                            }),
+                                                                              server3: (context: StreamContext): StreamSource => ({
+                                                                                  id: 3,
+                                                                                      name: "Server 3",
+                                                                                          url: `${STREAM_CONFIG.SERVER_3_BASE}/${formatPath(context, 3)}`
+                                                                                            }),
+                                                                                            };
+
+                                                                                            export async function fetchMovieStreams(tmdbId: number, mediaType: MediaType, season = 1, episode = 1): Promise<StreamSource[]> {
+                                                                                              const context = { tmdbId, mediaType, season, episode };
+                                                                                                
+                                                                                                  // Directly returns the array of valid direct streaming URLs
+                                                                                                    return [
+                                                                                                        providerRegistry.server1(context),
+                                                                                                            providerRegistry.server2(context),
+                                                                                                                providerRegistry.server3(context)
+                                                                                                                  ];
+                                                                                                                  }
+                                                                                                                  
