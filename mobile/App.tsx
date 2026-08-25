@@ -1,31 +1,9 @@
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { WebView } from "react-native-webview";
+import Video, { ResizeMode } from "react-native-video";
 import { IMAGE_URL, Item, itemTitle, itemType, itemYear, Selection, tmdb } from "./api";
 import { fetchMovieStreams, StreamSource } from "./streamAggregator";
-
-const PLAYER_INJECTION = `
-  (function () {
-    const blocked = /(^|[./-])(ads?|adserver|popunder|popup|doubleclick|click\.)/i;
-    const remove = () => document.querySelectorAll('iframe, a, video, div').forEach(node => {
-      const value = node.src || node.href || node.className || '';
-      if (blocked.test(String(value))) node.remove();
-    });
-    const open = window.open;
-    window.open = function () { return null; };
-    document.addEventListener('click', event => {
-      const target = event.target;
-      if (target && blocked.test(String(target.href || target.closest?.('a')?.href || ''))) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    }, true);
-    new MutationObserver(remove).observe(document.documentElement, { childList: true, subtree: true });
-    remove();
-    true;
-  })();
-`;
 
 export default function App() {
   const [screen, setScreen] = useState<"home" | "search" | "watch">("home");
@@ -51,7 +29,7 @@ function Watch({ selection, onBack, onOpen }: { selection: Selection; onBack: ()
   useEffect(() => { setItem(null); setSourceIndex(0); Promise.all([tmdb<Item>(`/${selection.type}/${selection.id}?append_to_response=external_ids`), fetchMovieStreams(selection), tmdb<{ results: Item[] }>(`/${selection.type}/${selection.id}/similar`)]).then(([details, available, similar]) => { setItem(details); setSources(available); setRelated((similar.results ?? []).slice(0, 12)); }).catch(() => setItem(null)); }, [selection]);
   if (!item) return <View style={styles.screen}><Pressable onPress={onBack}><Text style={styles.back}>‹ Home</Text></Pressable><View style={styles.loading}><ActivityIndicator color="#e50914" /></View></View>;
   const source = sources[sourceIndex];
-  return <View style={styles.screen}><Pressable onPress={onBack}><Text style={styles.back}>‹ Home</Text></Pressable>{source ? <WebView key={source.id} source={{ uri: source.url }} style={styles.player} javaScriptEnabled domStorageEnabled allowsInlineMediaPlayback mediaPlaybackRequiresUserAction={false} allowsFullscreenVideo injectedJavaScript={PLAYER_INJECTION} injectedJavaScriptBeforeContentLoaded={PLAYER_INJECTION} userAgent="Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36" onError={() => sourceIndex + 1 < sources.length && setSourceIndex(index => index + 1)} /> : <View style={styles.player}><Text style={styles.muted}>Configure a stream API to enable playback.</Text></View>}<ScrollView><Text style={styles.kicker}>NOW WATCHING</Text><Text style={styles.watchTitle}>{itemTitle(item)}</Text><Text style={styles.meta}>{itemYear(item) || "—"} · ⭐ {item.vote_average?.toFixed(1) ?? "—"}/10</Text><Text style={styles.section}>Overview</Text><Text style={styles.overview}>{item.overview || "No synopsis is available."}</Text><Text style={styles.section}>Recommended Movies</Text><FlatList data={related} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row} keyExtractor={candidate => `${itemType(candidate)}-${candidate.id}`} renderItem={({ item: candidate }) => <Poster item={candidate} onPress={() => onOpen(candidate)} />} /></ScrollView></View>;
+  return <View style={styles.screen}><Pressable onPress={onBack}><Text style={styles.back}>‹ Home</Text></Pressable>{source ? <Video key={source.id} source={{ uri: source.url }} style={styles.player} controls resizeMode={ResizeMode.CONTAIN} paused={false} onError={() => sourceIndex + 1 < sources.length && setSourceIndex(index => index + 1)} /> : <View style={styles.player}><Text style={styles.muted}>Configure a direct media API to enable playback.</Text></View>}<ScrollView><Text style={styles.kicker}>NOW WATCHING</Text><Text style={styles.watchTitle}>{itemTitle(item)}</Text><Text style={styles.meta}>{itemYear(item) || "—"} · ⭐ {item.vote_average?.toFixed(1) ?? "—"}/10</Text><Text style={styles.section}>Overview</Text><Text style={styles.overview}>{item.overview || "No synopsis is available."}</Text><Text style={styles.section}>Recommended Movies</Text><FlatList data={related} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row} keyExtractor={candidate => `${itemType(candidate)}-${candidate.id}`} renderItem={({ item: candidate }) => <Poster item={candidate} onPress={() => onOpen(candidate)} />} /></ScrollView></View>;
 }
 
 function Header({ onSearch }: { onSearch: () => void }) { return <View style={styles.header}><Text style={styles.logo}>SHADOW <Text style={styles.red}>PLAY</Text></Text><Pressable onPress={onSearch}><Text style={styles.searchIcon}>⌕</Text></Pressable></View>; }

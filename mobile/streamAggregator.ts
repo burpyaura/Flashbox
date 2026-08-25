@@ -10,7 +10,7 @@ export async function fetchMovieStreams(selection: Selection): Promise<StreamSou
     if (!response.ok) return [];
     const data = await response.json() as { primaryStreamUrl?: unknown; fallbacks?: unknown };
     const urls = [data.primaryStreamUrl, ...(Array.isArray(data.fallbacks) ? data.fallbacks : [])];
-    return urls.filter((url): url is string => typeof url === "string" && url.length > 0).map((url, id) => ({ id, name: `Stream ${id + 1}`, url }));
+    return urls.filter((url): url is string => typeof url === "string" && /^https?:\/\//i.test(url)).map((url, id) => ({ id, name: `Stream ${id + 1}`, url }));
   } catch {
     return [];
   }
