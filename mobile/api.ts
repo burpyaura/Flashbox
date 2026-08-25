@@ -2,7 +2,7 @@ export type MediaType = "movie" | "tv";
 export type Item = { id: number; media_type?: MediaType; title?: string; name?: string; overview?: string; poster_path?: string | null; release_date?: string; first_air_date?: string; vote_average?: number };
 export type Selection = { id: number; type: MediaType };
 export const IMAGE_URL = "https://image.tmdb.org/t/p/w500";
-const TMDB_API = "https://api.themoviedb.org/3";
+const TMDB_API = process.env.EXPO_PUBLIC_TMDB_API_URL ?? "https://api.themoviedb.org/3";
 const TMDB_KEY = process.env.EXPO_PUBLIC_TMDB_API_KEY ?? "";
 
 export const itemTitle = (item: Item) => item.title ?? item.name ?? "Untitled";
