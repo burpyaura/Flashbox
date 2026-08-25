@@ -1,64 +1,19 @@
 import { MediaType } from "./tmdb";
 
 export type StreamSource = { id: number; name: string; url: string };
+type StreamResponse = { primaryStreamUrl?: unknown; fallbacks?: unknown };
 
-const RENDER_BACKEND_URL = "https://shadowplay-backend-wgyg.onrender.com";
+const API_URL = "https://shadowplay-backend-wgyg.onrender.com/api/stream";
 
-export async function fetchMovieStreams(
-  tmdbId: number, 
-    mediaType: MediaType, 
-      season = 1, 
-        episode = 1
-        ): Promise<StreamSource[]> {
-          try {
-              const response = await fetch(
-                    `${RENDER_BACKEND_URL}/api/stream?tmdbId=${tmdbId}&type=${mediaType}&season=${season}&episode=${episode}`
-                        );
-
-                            if (!response.ok) {
-                                  throw new Error("Backend response error");
-                                      }
-
-                                          const data = await response.json();
-
-                                              const sources: StreamSource[] = [];
-
-                                                  // Primary fast stream url from Render
-                                                      if (data.primaryStreamUrl) {
-                                                            sources.push({
-                                                                    id: 1,
-                                                                            name: "Auto Player",
-                                                                                    url: data.primaryStreamUrl,
-                                                                                          });
-                                                                                              }
-
-                                                                                                  // Fallback streams
-                                                                                                      if (Array.isArray(data.fallbacks)) {
-                                                                                                            data.fallbacks.forEach((url: string, index: number) => {
-                                                                                                                    sources.push({
-                                                                                                                              id: index + 2,
-                                                                                                                                        name: `Backup Server ${index + 1}`,
-                                                                                                                                                  url: url,
-                                                                                                                                                          });
-                                                                                                                                                                });
-                                                                                                                                                                    }
-
-                                                                                                                                                                        return sources;
-                                                                                                                                                                          } catch (error) {
-                                                                                                                                                                              console.error("Failed to fetch streams from backend, applying fallback:", error);
-                                                                                                                                                                                  
-                                                                                                                                                                                      // Direct fallback if Render service is waking up
-                                                                                                                                                                                          const fallbackUrl = mediaType === "tv"
-                                                                                                                                                                                                ? `https://vidsrc.pro/embed/tv/${tmdbId}/${season}/${episode}`
-                                                                                                                                                                                                      : `https://vidsrc.pro/embed/movie/${tmdbId}`;
-
-                                                                                                                                                                                                          return [
-                                                                                                                                                                                                                {
-                                                                                                                                                                                                                        id: 1,
-                                                                                                                                                                                                                                name: "Auto Player",
-                                                                                                                                                                                                                                        url: fallbackUrl,
-                                                                                                                                                                                                                                              }
-                                                                                                                                                                                                                                                  ];
-                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                    
+export async function fetchMovieStreams(tmdbId: number, mediaType: MediaType, season = 1, episode = 1): Promise<StreamSource[]> {
+  try {
+    const params = new URLSearchParams({ tmdbId: String(tmdbId), type: mediaType, season: String(season), episode: String(episode) });
+    const response = await fetch(`${API_URL}?${params}`);
+    if (!response.ok) return [];
+    const data = await response.json() as StreamResponse;
+    const urls = [data.primaryStreamUrl, ...(Array.isArray(data.fallbacks) ? data.fallbacks : [])];
+    return urls.filter((url): url is string => typeof url === "string" && url.length > 0).map((url, index) => ({ id: index + 1, name: index ? `Backup Server ${index}` : "Auto Player", url }));
+  } catch {
+    return [];
+  }
+}
