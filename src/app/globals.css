@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-:root { --bg:#090a0a; --red:#722f37; --green:#00c853; --card:#151817; --muted:#8b9290; --line:#252a28; }
+:root { --bg:#090a0a; --red:#e50914; --green:#00c853; --card:#151817; --muted:#8b9290; --line:#252a28; }
 * { box-sizing:border-box; }
 html,body { margin:0; background:var(--bg); color:#fff; }
 body { font-family:Georgia,"Times New Roman",serif; }
@@ -26,7 +26,7 @@ nav button.active { background:var(--red); color:#fff; }
 .hero-content { padding:12px; }
 .hero-meta { display:flex; align-items:center; gap:8px; }
 .eyebrow { font-size:10px; font-weight:700; letter-spacing:.5px; }
-.hero-badge { display:inline-block; padding:4px 7px; border:1px solid #722f3755; border-radius:4px; background:#180c0d; color:var(--red); }
+.hero-badge { display:inline-block; padding:4px 7px; border:1px solid #e5091455; border-radius:4px; background:#180c0d; color:var(--red); }
 .hero-year { color:#b8b8b8; font-size:11px; }
 h1 { margin:5px 0 0; font-size:22px; line-height:24px; font-weight:800; }
 h2 { margin:2px 0 4px; color:var(--red); font-size:14px; line-height:16px; }
@@ -154,10 +154,10 @@ footer .nav-active { color:var(--red); }
 .search-screen-header { display:flex; height:42px; align-items:center; gap:9px; }
 .search-back { display:grid; width:34px; height:34px; place-items:center; flex:none; border:1px solid var(--line); border-radius:50%; background:#151817; }
 .search-field { display:flex; height:38px; min-width:0; flex:1; align-items:center; gap:8px; padding:0 11px; border:1px solid #3a403d; border-radius:8px; background:#141716; color:#aab0ad; box-shadow:0 8px 30px #0004; }
-.search-field:focus-within { border-color:var(--red); box-shadow:0 0 0 2px #722f3722; }
+.search-field:focus-within { border-color:var(--red); box-shadow:0 0 0 2px #e5091422; }
 .search-field input { min-width:0; flex:1; border:0; outline:0; background:none; color:#fff; font-size:13px; font-family:inherit; }
 .search-field button { display:grid; padding:0; background:none; color:#aaa; }
-.search-submit { height:36px; padding:0 14px; border-radius:7px; background:var(--red); font-size:12px; font-weight:700; box-shadow:0 8px 18px #722f3733; }
+.search-submit { height:36px; padding:0 14px; border-radius:7px; background:var(--red); font-size:12px; font-weight:700; box-shadow:0 8px 18px #e5091433; }
 .search-submit:hover { background:#ff1924; }
 .search-section { margin-top:18px; }
 .search-section h2 { margin:0 0 10px; color:#f5f5f5; font-size:16px; letter-spacing:.1px; }
