@@ -120,7 +120,10 @@ footer .nav-active { color:var(--red); }
 .watch-actions button.active { color:var(--red); }
 .watch-genres { display:flex; flex-wrap:wrap; gap:6px; margin-top:13px; }
 .watch-genres span { padding:5px 8px; border:1px solid #3a403d; border-radius:12px; color:#bbb; font-size:10px; }
-.watch-overview { margin-top:20px; padding-top:14px; border-top:1px solid #252a28; }
+.watch-overview { display:block; width:100%; margin-top:20px; padding:14px 0 0; border-top:1px solid #252a28; color:inherit; text-align:left; }
+.watch-overview.open { padding-bottom:2px; }
+.overview-heading { display:flex; align-items:center; justify-content:space-between; }
+.overview-toggle { display:grid; width:22px; height:22px; place-items:center; border:1px solid #444b47; border-radius:50%; color:var(--red); font-size:17px; line-height:1; }
 .watch-overview h2 { margin:0 0 7px; color:#fff; font-size:15px; }
 .watch-overview p { max-width:760px; margin:0; color:#bbb; font-size:12px; line-height:18px; }
 .tv-episodes { margin-top:24px; }
