@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Bookmark, Clock3, Download, MoreVertical, Play, Search, Share2, Star, Tv, UserRound, X, Trash2, ArrowRight } from "lucide-react";
+import { ArrowLeft, Bookmark, Clock3, Download, MoreVertical, Play, Search, Share2, Star, Tv, UserRound, X, Trash2, ArrowRight, Settings2, Wifi, Check, HardDrive, Bell, ShieldCheck, LogOut, ChevronRight, Film, Sparkles, CircleHelp } from "lucide-react";
 import { getAnime, getBollywood, getDetails, getGlobalTrending, getHollywood, getPopularAnime, getPopularMovies, getPopularTv, getSeason, getSimilar, getTopRatedMovies, getTrending, imageUrl, itemRuntime, itemTitle, itemType, itemYear, MediaType, searchTmdb, TmdbEpisode, TmdbItem } from "@/lib/tmdb";
 import { fetchMovieStreams, StreamSource } from "@/lib/streamAggregator";
 
@@ -83,6 +83,9 @@ export default function Home() {
 
   if (searchOpen) return <SearchScreen onClose={() => setSearchOpen(false)} onOpen={selected => { setActiveMovie(selected); setSearchOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }); }} />;
   if (activeMovie) return <WatchScreen selected={activeMovie} onBack={() => setActiveMovie(null)} onSelect={setActiveMovie} />;
+  if (nav === 1) return <RecentWatchScreen onNavigate={setNav} onOpen={selected => setActiveMovie(selected)} />;
+  if (nav === 2) return <DownloadsScreen onNavigate={setNav} />;
+  if (nav === 3) return <ProfileScreen onNavigate={setNav} />;
   const activeHero = hero[heroIndex];
   const openWatch = (item: TmdbItem) => setActiveMovie({ id: item.id, type: itemType(item) });
   return <main className="shadow-app">
@@ -100,7 +103,7 @@ export default function Home() {
        <div className="infinite-feed">{feedSections.map(section => <section className="feed-section" key={section.title}><SectionTitle title={section.title} action="View All" /><div className="scroller">{section.items.map((item, index) => <MovieCard key={`${section.title}-${item.id}-${index}`} item={item} onOpen={() => openWatch(item)} />)}</div></section>)}</div>
       <div id="scroll-sentinel" ref={feedSentinel} className="feed-sentinel" aria-hidden="true" />
       {feedLoading && <div className="feed-loader" aria-label="Loading more content"><span className="spinner" /></div>}
-     <footer>{[[Play, "Home"], [Clock3, "Recent Watch"], [Download, "Downloads"], [UserRound, "Profile"]].map(([Icon, label]: any, i) => <button key={label} onClick={() => setNav(i)} className={nav === i ? "nav-active" : ""}><Icon fill={i === 0 && nav === 0 ? "currentColor" : "none"} /><span>{label}</span></button>)}</footer>
+      <AppFooter active={nav} onNavigate={setNav} />
   </main>;
 }
 
@@ -133,6 +136,51 @@ function TvEpisodes({ item, season, episodes, loading, onSeasonChange, onPlay }:
 function SectionTitle({ title, action }: { title: string; action?: string }) { return <div className="section-title"><h3>{title}</h3>{action && <button>{action}</button>}</div>; }
 function ContinueCard({ item, progress, onOpen }: { item: TmdbItem; progress: number; onOpen: () => void }) { return <article className="continue-card" onClick={onOpen} style={{ backgroundImage: `linear-gradient(transparent 30%,#090909 100%),url(${imageUrl(item.poster_path) ?? ""})` }}><MoreVertical className="more" /><span className="play-ring"><Play fill="currentColor" /></span><div className="card-copy"><strong>{itemTitle(item)}</strong><small>{itemYear(item) || "S1 E1"}</small><span className="progress"><i style={{ width: `${progress}%` }} /></span></div></article>; }
 function MovieCard({ item, onOpen }: { item: TmdbItem; onOpen: () => void }) { return <article className="movie" onClick={onOpen}>{imageUrl(item.poster_path) ? <img src={imageUrl(item.poster_path)!} alt="" /> : fallback(itemTitle(item))}<strong>{itemTitle(item)}</strong><small>{itemRuntime(item)}</small></article>; }
+
+function AppFooter({ active, onNavigate }: { active: number; onNavigate: (index: number) => void }) {
+  return <footer>{[[Play, "Home"], [Clock3, "Recent Watch"], [Download, "Downloads"], [UserRound, "Profile"]].map(([Icon, label]: any, i) => <button key={label} onClick={() => onNavigate(i)} className={active === i ? "nav-active" : ""} aria-label={label}><Icon fill={i === 0 && active === 0 ? "currentColor" : "none"} /><span>{label}</span></button>)}</footer>;
+}
+
+const libraryItems = [
+  { title: "Spirited Away", meta: "Movie · 2h 5m", image: "/shadow-assets/spirited-away.png", progress: 68, type: "movie" as const, id: 129 },
+  { title: "Interstellar", meta: "Movie · 2h 49m", image: "/shadow-assets/interstellar.png", progress: 34, type: "movie" as const, id: 157336 },
+  { title: "Jujutsu Kaisen", meta: "S2 · Episode 8", image: "/shadow-assets/jujutsu.png", progress: 82, type: "tv" as const, id: 95479 },
+  { title: "Your Name", meta: "Movie · 1h 46m", image: "/shadow-assets/your-name.png", progress: 100, type: "movie" as const, id: 372058 },
+  { title: "Demon Slayer", meta: "S3 · Episode 4", image: "/shadow-assets/demon-slayer.png", progress: 51, type: "tv" as const, id: 85937 },
+  { title: "Inception", meta: "Movie · 2h 28m", image: "/shadow-assets/inception.png", progress: 100, type: "movie" as const, id: 27205 },
+];
+
+function LibraryCard({ item, onRemove }: { item: typeof libraryItems[number]; onRemove?: () => void }) {
+  return <article className="library-card"><div className="library-art"><img src={item.image} alt="" /><span className="library-play"><Play size={15} fill="currentColor" /></span>{item.progress < 100 && <span className="library-progress"><i style={{ width: `${item.progress}%` }} /></span>}</div><div className="library-copy"><strong>{item.title}</strong><small>{item.meta}</small>{item.progress < 100 ? <span className="resume-label">{item.progress}% watched</span> : <span className="watched-label"><Check size={12} /> Watched</span>}</div>{onRemove && <button className="icon-button library-remove" onClick={event => { event.stopPropagation(); onRemove(); }} aria-label={`Remove ${item.title}`}><X size={16} /></button>}</article>;
+}
+
+function PageHeader({ eyebrow, title, icon: Icon }: { eyebrow: string; title: string; icon: typeof Clock3 }) {
+  return <header className="library-header"><div className="header-icon"><Icon size={24} /></div><div><p className="page-eyebrow">{eyebrow}</p><h1>{title}</h1></div></header>;
+}
+
+function RecentWatchScreen({ onNavigate, onOpen }: { onNavigate: (index: number) => void; onOpen: (selected: Selected) => void }) {
+  const [items, setItems] = useState(libraryItems);
+  const [refreshing, setRefreshing] = useState(false);
+  const refresh = () => { setRefreshing(true); window.setTimeout(() => setRefreshing(false), 550); };
+  return <main className="library-page"><PageHeader eyebrow="YOUR LIBRARY" title="Recent watch" icon={Clock3} /><div className="library-toolbar"><span>{items.length} titles in your history</span><button onClick={refresh} className="refresh-button"><Sparkles size={15} className={refreshing ? "spin-icon" : ""} /> {refreshing ? "Refreshing…" : "Refresh"}</button></div><section className="library-grid">{items.map(item => <div className="library-card-button" role="button" tabIndex={0} key={item.title} onClick={() => onOpen({ id: item.id, type: item.type })} onKeyDown={event => { if (event.key === "Enter") onOpen({ id: item.id, type: item.type }); }}><LibraryCard item={item} onRemove={() => setItems(current => current.filter(candidate => candidate.title !== item.title))} /></div>)}</section>{items.length === 0 && <EmptyLibrary icon={Clock3} title="Your watch history is clear" action="Browse home" onAction={() => onNavigate(0)} />}{items.length > 0 && <p className="library-hint"><Film size={15} /> Pick up where you left off</p>}<AppFooter active={1} onNavigate={onNavigate} /></main>;
+}
+
+function DownloadsScreen({ onNavigate }: { onNavigate: (index: number) => void }) {
+  const [items, setItems] = useState(libraryItems.slice(0, 4));
+  const [filter, setFilter] = useState("All");
+  const filtered = filter === "All" ? items : items.filter(item => item.type === "movie");
+  return <main className="library-page"><PageHeader eyebrow="OFFLINE MODE" title="Downloads" icon={Download} /><div className="download-hero"><div className="download-orb"><Wifi size={25} /></div><div><strong>Ready without Wi-Fi</strong><p>Watch your saved titles anywhere.</p></div><span className="storage-pill"><HardDrive size={14} /> 2.4 GB free</span></div><div className="library-toolbar"><div className="filter-pills">{["All", "Movies"].map(value => <button key={value} onClick={() => setFilter(value)} className={filter === value ? "selected" : ""}>{value}</button>)}</div><span>{filtered.length} files</span></div><section className="library-grid">{filtered.map(item => <div key={item.title} className="library-card-wrap"><LibraryCard item={{ ...item, progress: 100 }} onRemove={() => setItems(current => current.filter(candidate => candidate.title !== item.title))} /><span className="downloaded"><Check size={12} /> Downloaded</span></div>)}</section>{filtered.length === 0 && <EmptyLibrary icon={Download} title="No downloads yet" action="Find something to watch" onAction={() => onNavigate(0)} />}<AppFooter active={2} onNavigate={onNavigate} /></main>;
+}
+
+function ProfileScreen({ onNavigate }: { onNavigate: (index: number) => void }) {
+  const [notifications, setNotifications] = useState(true);
+  const [autoplay, setAutoplay] = useState(true);
+  return <main className="library-page profile-page"><PageHeader eyebrow="ACCOUNT" title="Profile" icon={UserRound} /><section className="profile-card"><div className="avatar">S<span>+</span></div><div className="profile-copy"><h2>Shadow guest</h2><p>Personal space for your watchlist</p></div><button className="icon-button" aria-label="Edit profile"><Settings2 size={20} /></button></section><section className="stats-row"><div><strong>24</strong><span>Watched</span></div><div><strong>06</strong><span>Downloads</span></div><div><strong>12</strong><span>Favorites</span></div></section><section className="settings-section"><p className="section-label">PREFERENCES</p><SettingRow icon={Bell} title="Notifications" description="New releases and updates" checked={notifications} onChange={() => setNotifications(value => !value)} /><SettingRow icon={Play} title="Autoplay next" description="Continue to the next episode" checked={autoplay} onChange={() => setAutoplay(value => !value)} /></section><section className="settings-section"><p className="section-label">APP</p><ActionRow icon={ShieldCheck} title="Privacy & safety" /><ActionRow icon={CircleHelp} title="Help center" /><ActionRow icon={LogOut} title="Sign out" danger /></section><AppFooter active={3} onNavigate={onNavigate} /></main>;
+}
+
+function SettingRow({ icon: Icon, title, description, checked, onChange }: { icon: typeof Bell; title: string; description: string; checked: boolean; onChange: () => void }) { return <button className="setting-row" onClick={onChange}><span className="setting-icon"><Icon size={18} /></span><span className="setting-copy"><strong>{title}</strong><small>{description}</small></span><span className={`toggle ${checked ? "on" : ""}`}><i /></span></button>; }
+function ActionRow({ icon: Icon, title, danger }: { icon: typeof Bell; title: string; danger?: boolean }) { return <button className={`action-row ${danger ? "danger" : ""}`}><span className="setting-icon"><Icon size={18} /></span><strong>{title}</strong><ChevronRight size={17} /></button>; }
+function EmptyLibrary({ icon: Icon, title, action, onAction }: { icon: typeof Clock3; title: string; action: string; onAction: () => void }) { return <div className="empty-library"><span><Icon size={28} /></span><h2>{title}</h2><p>Start exploring and your collection will appear here.</p><button onClick={onAction}>{action}</button></div>; }
 
 function SearchScreen({ onClose, onOpen }: { onClose: () => void; onOpen: (selected: Selected) => void }) {
   const [query, setQuery] = useState("");
