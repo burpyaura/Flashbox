@@ -1,4 +1,4 @@
-export const TMDB_KEY = "9e38d1ffc33df9e31544cdcaf6ccabba";
+export const TMDB_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY ?? "";
 export const TMDB_BASE = "https://api.themoviedb.org/3";
 export const TMDB_IMAGE = "https://image.tmdb.org/t/p/w500";
 
@@ -32,6 +32,7 @@ export const itemYear = (item: TmdbItem) => (item.release_date ?? item.first_air
 export const itemRuntime = (item: TmdbItem) => item.runtime ? `${Math.floor(item.runtime / 60)}h ${item.runtime % 60}m` : itemType(item) === "tv" ? "TV Series" : "Movie";
 
 async function tmdb<T>(path: string): Promise<T> {
+  if (!TMDB_KEY) throw new Error("TMDB API key is not configured. Add NEXT_PUBLIC_TMDB_API_KEY to the environment.");
   const response = await fetch(`${TMDB_BASE}${path}${path.includes("?") ? "&" : "?"}api_key=${TMDB_KEY}`);
   if (!response.ok) throw new Error(`TMDB request failed: ${response.status}`);
   const data = await response.json() as T & { results?: unknown };
