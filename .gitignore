@@ -7,6 +7,11 @@
 # nested standalone projects (kept locally only)
 /MovieBox-Tui/
 
+# Cloudflare / OpenNext
+.open-next/
+.dev.vars
+.wrangler/
+
 # lock files (using bun)
 package-lock.json
 yarn.lock
