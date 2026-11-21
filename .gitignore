@@ -4,6 +4,9 @@
 /node_modules
 **/node_modules/
 
+# nested standalone projects (kept locally only)
+/MovieBox-Tui/
+
 # lock files (using bun)
 package-lock.json
 yarn.lock
